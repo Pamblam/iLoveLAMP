@@ -1,0 +1,64 @@
+<div class="row">
+	<div class="col-lg-12">
+		<h2><i class="fa fa-sitemap"></i> Manage Servers</h2>   
+	</div>
+</div>           
+<hr />
+
+<div class="row pad-top">
+	<div class="col-lg-12">
+		
+		<div id="server_output" style="display:none"></div>
+		
+		<div class="form-group">
+			<label for="all_servers_dd">Choose a Server: </label>
+			<select class="form-control" id="all_servers_dd">
+				<option value="NEW">New Server</option>
+			</select>
+		</div>
+		
+		<div class="well well-lg" id="server_form_well">
+			<div class="alert alert-danger" id="server_mod_error" style="display:none;"></div>
+			<div class="alert alert-success" id="server_mod_success" style="display:none;"></div>
+			
+			<h2>Server Details</h2>
+			
+			<div class="form-group">
+				<label for="server_title">Server Title: </label>
+				<input class="form-control input-lg" id="server_title" type="text">
+			</div>
+
+			<div class="checkbox">
+				<label><input type="checkbox" value="1" id="is_default_server">Default server</label>
+			</div>
+			
+			<div class="form-group">
+				<label for="server_host">Host: </label>
+				<input class="form-control" id="srever_host" type="text">
+			</div>
+			
+			<div class="form-group">
+				<label for="server_user">User: </label>
+				<input class="form-control" id="srever_user" type="text">
+			</div>
+			
+			<div class="form-group">
+				<label for="server_pw">Password: </label>
+				<input class="form-control" id="srever_pw" type="password">
+			</div>
+			
+			<div class="form-group">
+				<label for="server_error_logs">Error Log Path: </label>
+				<input class="form-control" id="server_error_logs" type="text">
+			</div>
+			
+			<div class="form-group">
+				<label for="server_access_logs">Access Log Path: </label>
+				<input class="form-control" id="server_access_logs" type="text">
+			</div>
+			
+			<button type="button" class="btn btn-primary" id="submit_server_changes">Create or Update Server Details</button>
+		</div>
+		
+	</div>
+</div>

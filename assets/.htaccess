@@ -1,0 +1,6 @@
+
+# Hide the super-secret config file
+<files config.json>
+order allow,deny
+deny from all
+</files>

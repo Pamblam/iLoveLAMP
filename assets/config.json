@@ -1,0 +1,14 @@
+{
+	"servers": {
+		"127.0.0.1": {
+			"USER": "robert",
+			"PASS": "bijoux22",
+			"HOST": "127.0.0.1",
+			"ERROR_LOG": "",
+			"ACCESS_LOG": "",
+			"DEFAULT": true
+		}
+	},
+	
+	"theme": "skin-red-light"
+}
