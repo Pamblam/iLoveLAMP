@@ -1,8 +1,8 @@
 {
 	"servers": {
-		"127.0.0.1": {
-			"USER": "robert",
-			"PASS": "bijoux22",
+		"HOME": {
+			"USER": "myusername",
+			"PASS": "mupassword",
 			"HOST": "127.0.0.1",
 			"ERROR_LOG": "",
 			"ACCESS_LOG": "",
