@@ -19,6 +19,7 @@ iLoveLAMP.modules.servers = (function(){
 	}
 	
 	function validateAndSave(server){
+		$("html, body").animate({ scrollTop: 0 }, "slow");
 		$.ajax({
 			url: "./assets/API.php",
 			data: {
@@ -51,10 +52,17 @@ iLoveLAMP.modules.servers = (function(){
 				$("#server_title").val($(this).val() === "NEW" ? "" : resp.data[$(this).val()].NAME);
 				$("#srever_host").val($(this).val() === "NEW" ? "" : resp.data[$(this).val()].HOST);
 				$("#srever_user").val($(this).val() === "NEW" ? "" : resp.data[$(this).val()].USER);
-				$("#server_error_logs").val($(this).val() === "NEW" ? "" : resp.data[$(this).val()].ERROR_LOG);
-				$("#server_access_logs").val($(this).val() === "NEW" ? "" : resp.data[$(this).val()].ACCESS_LOG);
 				$("#is_default_server").prop("checked", $(this).val() !== "NEW" && resp.data[$(this).val()].DEFAULT);
 				$("#srever_pw").val('');
+				$(".error_log_row").remove();
+				if($(this).val() !== "NEW"){
+					for(var logName in resp.data[$(this).val()].LOGS){
+						if(!resp.data[$(this).val()].LOGS.hasOwnProperty(logName)) continue;
+						addErrorLogRow();
+						$(".error_log_row").last().find("input").first().val(logName);
+						$(".error_log_row").last().find("input").last().val(resp.data[$(this).val()].LOGS[logName]);
+					}
+				}
 			});
 			$("#submit_server_changes").click(function(){
 				var server = {};
@@ -62,8 +70,10 @@ iLoveLAMP.modules.servers = (function(){
 				server.new_name = $("#server_title").val();
 				server.host = $("#srever_host").val();
 				server.user = $("#srever_user").val();
-				server.error_log = $("#server_error_logs").val();
-				server.access_log = $("#server_access_logs").val();
+				server.logs = {};
+				$(".error_log_row").each(function(){
+					server.logs[$(this).find("input").first().val()] = $(this).find("input").last().val();
+				});
 				server.pass = $("#srever_pw").val();
 				server.default = $("#is_default_server").is(":checked") ? 1 : 0;
 				if([server.new_name, server.host, server.user].indexOf("") > -1)  return showError("Title, host, user and password are required.");
@@ -81,13 +91,36 @@ iLoveLAMP.modules.servers = (function(){
 				validateAndSave(server);
 			});
 			
+			$("#add_log_file").click(addErrorLogRow);
+			
 		});
+		
+		$(document).on('click', '.removeLog', closeLog);
 	}
 	
+	function addErrorLogRow(){
+		$('<div class="row error_log_row" style="margin-bottom: 1em"><div class="col-md-4">'+
+			'<input type="text" class="form-control" placeholder="Log Name">'+
+			'</div><div class="col-md-8"><div class="input-group">'+
+			'<input type="text" class="form-control" placeholder="Log Path">'+
+			'<span class="input-group-btn">'+
+			'<button class="btn btn-danger removeLog" type="button"> <i class="fa fa-minus-square"></i> </button></span>'+
+			'</div></div></div>').insertBefore("#add_log_file");
+	}
+	
+	function closeLog(){
+		$(this).parent().parent().parent().parent().remove();
+	}
+		
+	function exit(){
+		$(document).off('click', '.removeLog', closeLog);
+	}
+		
 	return {
 		requiresServer: false,
 		title: "Manage Servers",
 		icon: "sitemap",
-		init: init
+		init: init,
+		exit: exit
 	};
 })();

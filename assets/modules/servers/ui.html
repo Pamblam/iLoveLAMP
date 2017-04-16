@@ -21,8 +21,6 @@
 			<div class="alert alert-danger" id="server_mod_error" style="display:none;"></div>
 			<div class="alert alert-success" id="server_mod_success" style="display:none;"></div>
 			
-			<h2>Server Details</h2>
-			
 			<div class="form-group">
 				<label for="server_title">Server Title: </label>
 				<input class="form-control input-lg" id="server_title" type="text">
@@ -31,6 +29,8 @@
 			<div class="checkbox">
 				<label><input type="checkbox" value="1" id="is_default_server">Default server</label>
 			</div>
+			
+			<h2>Connection Info</h2>
 			
 			<div class="form-group">
 				<label for="server_host">Host: </label>
@@ -47,16 +47,30 @@
 				<input class="form-control" id="srever_pw" type="password">
 			</div>
 			
+			<h2>Log Files</h2>
+			<button type="button" class="btn btn-default" id="add_log_file"><i class="fa fa-plus-square"></i> Add a log file</button>
+			
+			<h2>Theme</h2>
 			<div class="form-group">
-				<label for="server_error_logs">Error Log Path: </label>
-				<input class="form-control" id="server_error_logs" type="text">
+				<label for="server_theme">Choose a Theme </label>
+				<select class="form-control" id="server_theme">
+					<option value="DEFAULT">Default</option>
+					<option value="skin-blue">Blue</option>
+					<option value="skin-blue-light">Light Blue</option>
+					<option value="skin-yellow">Yellow</option>
+					<option value="skin-yellow-light">Light Yellow</option>
+					<option value="skin-green">Green</option>
+					<option value="skin-green-light">Light Green</option>
+					<option value="skin-purple">Purple</option>
+					<option value="skin-purple-light">Light Purple</option>
+					<option value="skin-red">Red</option>
+					<option value="skin-red-light">Light Red</option>
+					<option value="skin-black">Black</option>
+					<option value="skin-black-light">Light Black</option>
+				</select>
 			</div>
 			
-			<div class="form-group">
-				<label for="server_access_logs">Access Log Path: </label>
-				<input class="form-control" id="server_access_logs" type="text">
-			</div>
-			
+			<hr>
 			<button type="button" class="btn btn-primary" id="submit_server_changes">Create or Update Server Details</button>
 		</div>
 		

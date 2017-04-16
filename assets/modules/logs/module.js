@@ -1,10 +1,10 @@
-iLoveLAMP.modules.error_logs = (function(){
+iLoveLAMP.modules.logs = (function(){
 	
 	function init(){
 		$.ajax({
 			url: "./assets/API.php",
 			data: {
-				action: "error_logs",
+				action: "logs",
 				server: iLoveLAMP.currentServer
 			},
 			type: "POST"
@@ -15,8 +15,8 @@ iLoveLAMP.modules.error_logs = (function(){
 	
 	return {
 		requiresServer: true,
-		title: "Error Logs",
-		icon: "exclamation-triangle",
+		title: "Logs",
+		icon: "file-text",
 		init: init
 	};
 })();

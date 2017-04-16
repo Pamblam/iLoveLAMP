@@ -1,12 +1,14 @@
 {
 	"servers": {
 		"HOME": {
-			"USER": "myusername",
-			"PASS": "mupassword",
-			"HOST": "127.0.0.1",
-			"ERROR_LOG": "",
-			"ACCESS_LOG": "",
-			"DEFAULT": true
+			"USER": "batman",
+			"PASS": "bijoux22",
+			"HOST": "batcave",
+			"LOGS": {
+				"Apache Errors": "/var/log/apache2/error.log"
+			},
+			"DEFAULT": true,
+			"THEME": "DEFAULT"
 		}
 	},
 	

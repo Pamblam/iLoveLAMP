@@ -12,7 +12,11 @@ var iLoveLAMP = (function ($) {
     $(document).ready(function () {
 		iLoveLAMP.loadModules(function(){
 			iLoveLAMP.initServer(function(){
-				iLoveLAMP.loadPage("dashboard");
+				var initialModule = "dashboard";
+				if(window.location.hash && iLoveLAMP.modules[window.location.hash.substr(1)]){
+					initialModule = window.location.hash.substr(1);
+				}
+				iLoveLAMP.loadPage(initialModule);
 			});
 		});
     });
@@ -29,6 +33,8 @@ var iLoveLAMP = (function ($) {
     return {
 
 		currentServer: false,
+		currentModule: false,
+		
 		modules: {},
 		
 		getServers: function(cb, forceReset){
@@ -49,6 +55,9 @@ var iLoveLAMP = (function ($) {
 			iLoveLAMP.getServers(function(resp){
 				if((iLoveLAMP.modules[page].requiresServer && !iLoveLAMP.currentServer) || Object.keys(AllServers).length < 1) 
 					return iLoveLAMP.showErrorPage("This module requires a server. Choose one by clicking the Servers icon in the top right, or add one in the 'Servers' module.");
+				if(iLoveLAMP.currentModule !== false && iLoveLAMP.modules[iLoveLAMP.currentModule].exit) iLoveLAMP.modules[iLoveLAMP.currentModule].exit()
+				iLoveLAMP.currentModule = page;
+				window.location.hash = '#'+page;
 				$(".active").removeClass("active");
 				$("#page-inner").html("<center style='margin:1em;'><img src='./assets/imgs/loader.gif' /></center>");
 				$("#page-inner").load("./assets/modules/"+page+"/ui.html", function(){

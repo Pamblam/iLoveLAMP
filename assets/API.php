@@ -34,8 +34,8 @@ switch($_REQUEST['action']){
 				"NAME" => $name,
 				"USER" => $config['USER'],
 				"HOST" => $config['HOST'],
-				"ERROR_LOG" => $config['ERROR_LOG'],
-				"ACCESS_LOG" => $config['ACCESS_LOG'],
+				"LOGS" => $config['LOGS'],
+				"THEME" => $config['THEME'],
 				"DEFAULT" => $config['DEFAULT']
 			);
 		}
@@ -60,6 +60,7 @@ switch($_REQUEST['action']){
 		$servers = json_decode($servers, true);
 		$pass = empty($_REQUEST['server']['pass']) ? false : $_REQUEST['server']['pass'];
 		if(empty($pass))
+			
 			foreach($servers['servers'] as $name=>$config)
 				if($name === $_REQUEST['server']['orig_name'])
 					$pass = $config['PASS'];
@@ -71,16 +72,12 @@ switch($_REQUEST['action']){
 			oops("Could not login. Invalid host, user or password", $e); 
 		}
 		
-		if(!empty($_REQUEST['server']['error_log'])){
-			$raw = $ssh->exec('[ -f '.$_REQUEST['server']['error_log'].' ] && echo "1" || echo "0"');
-			$raw = trim($raw); $raw = intval($raw);
-			if(!$raw) oops("Error Log file not found");
-		}
-		
-		if(!empty($_REQUEST['server']['access_log'])){
-			$raw = $ssh->exec('[ -f '.$_REQUEST['server']['error_log'].' ] && echo "1" || echo "0"');
-			$raw = trim($raw); $raw = intval($raw);
-			if(!$raw) oops("Access Log file not found");
+		if(!empty($_REQUEST['server']['logs'])){
+			foreach($_REQUEST['server']['logs'] as $logName=>$logPath){
+				$raw = $ssh->exec('[ -f '.$logPath.' ] && echo "1" || echo "0"');
+				$raw = trim($raw); $raw = intval($raw);
+				if(!$raw) oops("Error Log file not found for $logName");
+			}
 		}
 		
 		// if it's default, remove other default
@@ -94,8 +91,7 @@ switch($_REQUEST['action']){
 				"USER"=> $_REQUEST['server']['user'],
 				"PASS"=> $pass,
 				"HOST"=> $_REQUEST['server']['host'],
-				"ERROR_LOG"=> $_REQUEST['server']['error_log'],
-				"ACCESS_LOG"=> $_REQUEST['server']['access_log'],
+				"LOGS"=> $_REQUEST['server']['logs'],
 				"DEFAULT"=> !empty($_REQUEST['server']['default'])
 			);
 		}else{
@@ -103,15 +99,14 @@ switch($_REQUEST['action']){
 				"USER"=> $_REQUEST['server']['user'],
 				"PASS"=> $pass,
 				"HOST"=> $_REQUEST['server']['host'],
-				"ERROR_LOG"=> $_REQUEST['server']['error_log'],
-				"ACCESS_LOG"=> $_REQUEST['server']['access_log'],
+				"LOGS"=> $_REQUEST['server']['logs'],
 				"DEFAULT"=> !empty($_REQUEST['server']['default'])
 			);
 			unset($servers['servers'][$_REQUEST['server']['orig_name']]);
 		}
 		$json = json($servers);
-		$fh = fopen("config.json", "w+");
-		fwrite($fh, $json);
+		if($fh = fopen("config.json", "w+")===false) oops("Can't open config file.");
+		if(fwrite($fh, $json) === false) oops("Can't write to config file.");
 		fclose($fh);
 		
 		//$return['data'] = $servers;
