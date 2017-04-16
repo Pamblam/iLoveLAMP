@@ -2,15 +2,15 @@
 	"servers": {
 		"HOME": {
 			"USER": "batman",
-			"PASS": "password",
+			"PASS": "nanananananananabatman",
 			"HOST": "batcave",
 			"LOGS": {
-				"Apache Errors": "/var/log/apache2/error.log"
+				"Apache Errors": "\/var\/log\/apache2\/error.log",
+				"Apache Access Logs": "\/var\/log\/apache2\/access.log"
 			},
-			"DEFAULT": true,
-			"THEME": "DEFAULT"
+			"THEME": "DEFAULT",
+			"DEFAULT": false
 		}
 	},
-	
-	"theme": "skin-red-light"
+	"theme": "skin-yellow-light"
 }

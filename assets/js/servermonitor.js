@@ -10,13 +10,15 @@ var iLoveLAMP = (function ($) {
 	
 
     $(document).ready(function () {
-		iLoveLAMP.loadModules(function(){
-			iLoveLAMP.initServer(function(){
-				var initialModule = "dashboard";
-				if(window.location.hash && iLoveLAMP.modules[window.location.hash.substr(1)]){
-					initialModule = window.location.hash.substr(1);
-				}
-				iLoveLAMP.loadPage(initialModule);
+		iLoveLAMP.setUp(function(){
+			iLoveLAMP.loadModules(function(){
+				iLoveLAMP.initServer(function(){
+					var initialModule = "dashboard";
+					if(window.location.hash && iLoveLAMP.modules[window.location.hash.substr(1)]){
+						initialModule = window.location.hash.substr(1);
+					}
+					iLoveLAMP.loadPage(initialModule);
+				});
 			});
 		});
     });
@@ -29,13 +31,65 @@ var iLoveLAMP = (function ($) {
 	});
 	
 	var AllServers = {};
+	var currentTheme = false;
 	
     return {
 
 		currentServer: false,
 		currentModule: false,
+		illSettings: false,
 		
 		modules: {},
+		
+		changeSettings:function(settings, cb){
+			if("function" !== typeof cb) cb = function(){};
+			$.ajax({
+				url: "./assets/API.php",
+				data: {action: "set_settings", settings: settings},
+				type: "POST"
+			}).done(cb);
+		},
+		
+		setServer: function(serverName){
+			iLoveLAMP.currentServer = serverName;
+			var theme = AllServers.data[serverName].THEME;
+			if(theme === "DEFAULT") theme = iLoveLAMP.illSettings.theme;
+			iLoveLAMP.setTheme(theme);
+			$("#current_server_display_name").html(serverName);
+		},
+		
+		setUp: function(cb, forceReset){
+			forceReset = forceReset || false;
+			if("function" !== typeof cb) cb = function(){};
+			if(false!== iLoveLAMP.illSettings  && !forceReset) return cb(iLoveLAMP.illSettings);
+			$.ajax({
+				url: "./assets/API.php",
+				data: {action: "get_settings"},
+				type: "POST"
+			}).done(function(resp){
+				iLoveLAMP.illSettings = resp.data;
+				if(!resp.data.theme) iLoveLAMP.illSettings.theme = "skin-red-light";
+				iLoveLAMP.setTheme(iLoveLAMP.illSettings.theme);
+				cb(resp);
+			});
+		},
+		
+		setTheme: function(theme){
+			if(undefined === theme){
+				theme = iLoveLAMP.illSettings.theme;
+				if(iLoveLAMP.currentServer && AllServers.data[iLoveLAMP.currentServer].THEME !== "DEFAULT")
+					theme = AllServers.data[iLoveLAMP.currentServer].THEME;
+			}
+			if(currentTheme === theme) return;
+			var skins = ['skin-blue','skin-blue-light','skin-yellow',	
+				'skin-yellow-light','skin-green','skin-green-light',
+				'skin-purple','skin-purple-light','skin-red','skin-red-light',
+				'skin-black','skin-black-light'];
+			for(var i=skins.length; i--;) 
+				$("."+skins[i]).removeClass(skins[i]).addClass(theme);
+			if(!$("body").hasClass(theme)) $("body").addClass(theme);
+			currentTheme = theme;
+		},
 		
 		getServers: function(cb, forceReset){
 			forceReset = forceReset || false;
@@ -103,10 +157,9 @@ var iLoveLAMP = (function ($) {
 				$(".servercount").html(Object.keys(resp.data).length);
 				for(var server in resp.data)
 					if(resp.data.hasOwnProperty(server) && resp.data[server].DEFAULT && resp.data[server].DEFAULT === true)
-						iLoveLAMP.currentServer = server;
+						iLoveLAMP.setServer(server);
 				if(!iLoveLAMP.currentServer && Object.keys(resp.data).length > 0) iLoveLAMP.chooseServer(callback);
 				else if(Object.keys(resp.data).length > 0){
-					$("#current_server_display_name").html(iLoveLAMP.currentServer);
 					callback();
 				}else callback();
 			});
@@ -127,8 +180,7 @@ var iLoveLAMP = (function ($) {
 					iLoveLAMP.BSAlert(htmlBuffer.join(''), callback);
 					$("#server_chooser_dd").change(function(){
 						if($(this).val() === "") return;
-						iLoveLAMP.currentServer = $(this).val();
-						$("#current_server_display_name").html(iLoveLAMP.currentServer);
+						iLoveLAMP.setServer($(this).val());
 					});
 				}else{
 					iLoveLAMP.BSAlert("<center><h1><i class='fa fa-exclamation-triangle'></i> Wait...</h1><p>You don't have any servers set up yet. Add one in the Servers module.</p></center>");

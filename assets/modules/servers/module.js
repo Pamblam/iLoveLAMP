@@ -33,7 +33,7 @@ iLoveLAMP.modules.servers = (function(){
 					if($(this).val() === server.orig_name) $(this).val(server.new_name);
 				});
 				showSuccess(resp.response);
-				iLoveLAMP.getServers(function(){}, true);
+				iLoveLAMP.getServers(function(){iLoveLAMP.setTheme()}, true);
 			}else{
 				showError(resp.response);
 			}
@@ -52,6 +52,7 @@ iLoveLAMP.modules.servers = (function(){
 				$("#server_title").val($(this).val() === "NEW" ? "" : resp.data[$(this).val()].NAME);
 				$("#srever_host").val($(this).val() === "NEW" ? "" : resp.data[$(this).val()].HOST);
 				$("#srever_user").val($(this).val() === "NEW" ? "" : resp.data[$(this).val()].USER);
+				$("#server_theme").val($(this).val() === "NEW" ? "DEFAULT" : resp.data[$(this).val()].THEME);
 				$("#is_default_server").prop("checked", $(this).val() !== "NEW" && resp.data[$(this).val()].DEFAULT);
 				$("#srever_pw").val('');
 				$(".error_log_row").remove();
@@ -70,6 +71,7 @@ iLoveLAMP.modules.servers = (function(){
 				server.new_name = $("#server_title").val();
 				server.host = $("#srever_host").val();
 				server.user = $("#srever_user").val();
+				server.theme = $("#server_theme").val();
 				server.logs = {};
 				$(".error_log_row").each(function(){
 					server.logs[$(this).find("input").first().val()] = $(this).find("input").last().val();

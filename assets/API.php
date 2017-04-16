@@ -45,12 +45,38 @@ switch($_REQUEST['action']){
 		break;
 	
 	case "error_logs":
-		
-		
 		$ssh = new Net_SSH2($config['HOST']);
 		if (!$ssh->login($config['USER'], $config['PASS'])) exit('Login Failed');
 		$raw = $ssh->exec("cd {$config['PATH']}; tail -n 100 {$config['NAME']}");
+		break;
 	
+	case "get_settings":
+		set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__))."/classes/sshlib");
+		require 'Net/SSH2.php';
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		unset($config['servers']);
+		$return['response'] = "Gathered settings.";
+		$return['data'] = $config;
+		output();
+		break;
+	
+	case "set_settings":
+		set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__))."/classes/sshlib");
+		require 'Net/SSH2.php';
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		foreach($_REQUEST['settings'] as $setting=>$val)
+			$config[$setting] = $val;
+		
+		$json = json($config);
+		$fh = fopen("config.json", "w+");
+		if($fh===false) oops("Can't open config file.");
+		if(fwrite($fh, $json) === false) oops("Can't write to config file.");
+		fclose($fh);
+		
+		$return['response'] = "Configuration updated.";
+		output();
 		break;
 		
 	case "check_server":
@@ -92,6 +118,7 @@ switch($_REQUEST['action']){
 				"PASS"=> $pass,
 				"HOST"=> $_REQUEST['server']['host'],
 				"LOGS"=> $_REQUEST['server']['logs'],
+				"THEME"=> $_REQUEST['server']['theme'],
 				"DEFAULT"=> !empty($_REQUEST['server']['default'])
 			);
 		}else{
@@ -100,16 +127,17 @@ switch($_REQUEST['action']){
 				"PASS"=> $pass,
 				"HOST"=> $_REQUEST['server']['host'],
 				"LOGS"=> $_REQUEST['server']['logs'],
+				"THEME"=> $_REQUEST['server']['theme'],
 				"DEFAULT"=> !empty($_REQUEST['server']['default'])
 			);
 			unset($servers['servers'][$_REQUEST['server']['orig_name']]);
 		}
 		$json = json($servers);
-		if($fh = fopen("config.json", "w+")===false) oops("Can't open config file.");
+		$fh = fopen("config.json", "w+");
+		if($fh===false) oops("Can't open config file.");
 		if(fwrite($fh, $json) === false) oops("Can't write to config file.");
 		fclose($fh);
 		
-		//$return['data'] = $servers;
 		$return['response'] = "Server validated and updated.";
 		output();
 		break;
