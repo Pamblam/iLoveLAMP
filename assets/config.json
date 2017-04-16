@@ -2,7 +2,7 @@
 	"servers": {
 		"HOME": {
 			"USER": "batman",
-			"PASS": "bijoux22",
+			"PASS": "password",
 			"HOST": "batcave",
 			"LOGS": {
 				"Apache Errors": "/var/log/apache2/error.log"
