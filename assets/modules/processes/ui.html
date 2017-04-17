@@ -1,13 +1,63 @@
 <div class="row">
 	<div class="col-lg-12">
-		<h2><i class="fa fa-tasks"></i> Processes</h2>   
-	</div>
-</div>           
-<hr />
-
-<div class="row pad-top">
-	<div class="col-lg-12">
+		<h2><i class="fa fa-tasks"></i> Processes</h2>  
+		<div>Last Updated <span id="seccounter">0 seconds</span> ago. <button class="btn btn-primary reloadBtn"><span class="glyphicon glyphicon-refresh"></span> Refresh</button></div>
+		<br>
+		<div class="well well-lg pad-top columnsList">
+			
+			<div class="checkbox-inline">
+				<label><input type="checkbox" value="COMMAND" checked>Process</label>
+			</div>
+			
+			<div class="checkbox-inline">
+				<label><input type="checkbox" value="CPU_USAGE" checked>CPU</label>
+			</div>
+			
+			<div class="checkbox-inline">
+				<label><input type="checkbox" value="MEM_USAGE" checked>Memory</label>
+			</div>
+			
+			<div class="checkbox-inline">
+				<label><input type="checkbox" value="PID">Process&nbsp;ID</label>
+			</div>
+			
+			<div class="checkbox-inline">
+				<label><input type="checkbox" value="PRIORITY">Priority</label>
+			</div>
+			
+			<div class="checkbox-inline">
+				<label><input type="checkbox" value="RES_MEMORY">Resident&nbsp;Set&nbsp;Size</label>
+			</div>
+			
+			<div class="checkbox-inline">
+				<label><input type="checkbox" value="SHARED_MEMORY">Shared&nbsp;Memory</label>
+			</div>
+			
+			<div class="checkbox-inline">
+				<label><input type="checkbox" value="STATUS" checked>Status</label>
+			</div>
+			
+			<div class="checkbox-inline">
+				<label><input type="checkbox" value="TIME">Time&nbsp;Running</label>
+			</div>
+			
+			<div class="checkbox-inline">
+				<label><input type="checkbox" value="TOTAL_MEMORY">Total&nbsp;Memory</label>
+			</div>
+			
+			<div class="checkbox-inline">
+				<label><input type="checkbox" value="USER" checked>User</label>
+			</div>
+			
+			<div class="checkbox-inline">
+				<label><input type="checkbox" value="VERBOSE" checked>Path</label>
+			</div>
+			
+		</div>
 		
+		<div class="table-responsive processes-table">
+			Loading processes...
+		</div>
 		
 	</div>
-</div>
+</div>   

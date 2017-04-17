@@ -15,6 +15,36 @@ checkParams(array("action"));
 
 switch($_REQUEST['action']){
 		
+	case "get_processes":
+		require realpath(dirname(__FILE__))."/classes/pman.php";
+		checkParams(array("server"));
+		set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__))."/classes/sshlib");
+		require 'Net/SSH2.php';
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		$ssh = new Net_SSH2($config['servers'][$_POST['server']]['HOST']);
+		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oopsie('Login Failed');
+		$pman = new pMan($ssh);
+		$return['data'] = $pman->plist();
+		$return['response'] = "Gathered processes.";
+		output();
+		break;
+		
+	case "kill_process":
+		require realpath(dirname(__FILE__))."/classes/pman.php";
+		checkParams(array("server", "pid"));
+		set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__))."/classes/sshlib");
+		require 'Net/SSH2.php';
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		$ssh = new Net_SSH2($config['servers'][$_POST['server']]['HOST']);
+		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oopsie('Login Failed');
+		$raw = $ssh->exec("kill -9 {$_POST['pid']}");
+		$return['data'] = $raw;
+		$return['response'] = "Killed process {$_POST['pid']}.";
+		output();
+		break;
+	
 	case "get_modules":
 		$mods_dir = realpath(dirname(__FILE__))."/modules";
 		$files = scandir($mods_dir, 1);
@@ -44,10 +74,19 @@ switch($_REQUEST['action']){
 		output();
 		break;
 	
-	case "error_logs":
-		$ssh = new Net_SSH2($config['HOST']);
-		if (!$ssh->login($config['USER'], $config['PASS'])) exit('Login Failed');
-		$raw = $ssh->exec("cd {$config['PATH']}; tail -n 100 {$config['NAME']}");
+	case "get_logs":
+		checkParams(array("server", "log"));
+		set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__))."/classes/sshlib");
+		require 'Net/SSH2.php';
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		
+		$ssh = new Net_SSH2($config['servers'][$_POST['server']]['HOST']);
+		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oopsie('Login Failed');
+		$raw = $ssh->exec("tail -n 100 {$config['servers'][$_POST['server']]['LOGS'][$_POST['log']]}");
+		$return['response'] = "Gatheered logs.";
+		$return['data'] = $raw;
+		output();
 		break;
 	
 	case "get_settings":

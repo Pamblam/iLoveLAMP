@@ -1,21 +1,38 @@
 <div class="row">
-	<div class="col-lg-4">
-		<h2><i class="fa fa-file-text"></i> Logs</h2> 
-	</div> 
-	<div class="col-lg-4"></div>
-	<div class="col-lg-4">
-		<div class="input-group">
-			<span class="input-group-addon" id="basic-addon1">
-				<span class="glyphicon glyphicon-filter"></span>
-			</span>
-			<input type="text" class="form-control" placeholder="Filter by keyword/phrase" aria-describedby="basic-addon1" id="filter_input">
+	<div class="col-lg-12">
+		<h2><i class="fa fa-file-text"></i> Tail Logs</h2>
+		<div class="well well-lg pad-top">
+			<div class="row">
+				<div class="col-md-3">
+					<div class="form-group">
+						<select class="form-control" id="logList"></select>
+					</div>
+				</div>
+				<div class="col-md-3">
+					<div class="form-group">
+						<select class="form-control" id="logLen">
+							<option value="100">-n 100</option>
+							<option value="75">-n 75</option>
+							<option value="50">-n 50</option>
+							<option value="25">-n 25</option>
+							<option value="10">-n 10</option>
+							<option value="5">-n 5</option>
+						</select>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="input-group">
+						<span class="input-group-addon" id="basic-addon1">
+							<span class="glyphicon glyphicon-filter"></span>
+						</span>
+						<input type="text" class="form-control" placeholder="Filter by keyword/phrase" aria-describedby="basic-addon1" id="filter_input">
+					</div>
+				</div>
+				<div class="col-md-2">
+					<button type="button" class="btn btn-primary btn-block" id="reloadBtn"><i class="fa fa-refresh"></i> Reload</button>
+				</div>
+			</div>	
 		</div>
+		<div id="logContent"><p>Loading Log...</p></div>
 	</div>
 </div>           
-<hr />
-
-<div class="row pad-top">
-	<div class="col-lg-12"></div>
-
-</div>
-</div>

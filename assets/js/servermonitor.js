@@ -91,6 +91,14 @@ var iLoveLAMP = (function ($) {
 			currentTheme = theme;
 		},
 		
+		getServer: function(serverName, cb){
+			iLoveLAMP.getServers(function(data){
+				var resp = false;
+				if(data.data[serverName]) resp = data.data[serverName];
+				cb(resp);
+			});
+		},
+		
 		getServers: function(cb, forceReset){
 			forceReset = forceReset || false;
 			if("function" !== typeof cb) cb = function(){};

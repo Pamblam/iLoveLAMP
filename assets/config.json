@@ -4,13 +4,10 @@
 			"USER": "batman",
 			"PASS": "nanananananananabatman",
 			"HOST": "batcave",
-			"LOGS": {
-				"Apache Errors": "\/var\/log\/apache2\/error.log",
-				"Apache Access Logs": "\/var\/log\/apache2\/access.log"
-			},
-			"THEME": "DEFAULT",
-			"DEFAULT": false
+			"LOGS": {},
+			"THEME": "skin-purple",
+			"DEFAULT": true
 		}
 	},
-	"theme": "skin-yellow-light"
+	"theme": "skin-red-light"
 }
