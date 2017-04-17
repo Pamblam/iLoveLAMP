@@ -70,7 +70,7 @@ var iLoveLAMP = (function ($) {
 				iLoveLAMP.illSettings = resp.data;
 				if(!resp.data.theme) iLoveLAMP.illSettings.theme = "skin-red-light";
 				iLoveLAMP.setTheme(iLoveLAMP.illSettings.theme);
-				cb(resp);
+				cb(iLoveLAMP.illSettings);
 			});
 		},
 		

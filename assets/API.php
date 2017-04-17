@@ -15,6 +15,34 @@ checkParams(array("action"));
 
 switch($_REQUEST['action']){
 		
+	case "do_update";
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		if(isset($config['ill_updating'])){
+			$return['response'] = $config['ill_updating']['response'];
+			$return['data'] = $config['ill_updating']['data'];
+			output();
+		}else{
+			require realpath(dirname(__FILE__))."/classes/asyncTask.php";
+			require realpath(dirname(__FILE__))."/classes/gitUpdater.php";
+			asyncPage::startOutput();
+			$return['response'] = "Starting download";
+			$return['data'] = array("completed_pct"=>1);
+			header("Content-Type: application/json");
+			echo json($GLOBALS['return']);
+			asyncPage::sendOutput();
+			new gitUpdater();
+		}
+		break;
+	
+	case "is_updating":
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		$return['response'] = (isset($config['ill_updating']) ? "C" : "Not c")."urrently updating iLL.";
+		$return['data'] = isset($config['ill_updating']);
+		output();
+		break;
+	
 	case "get_processes":
 		require realpath(dirname(__FILE__))."/classes/pman.php";
 		checkParams(array("server"));
