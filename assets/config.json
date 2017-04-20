@@ -1,18 +1,32 @@
 {
 	"servers": {
 		"HOME": {
-			"USER": "batman",
-			"PASS": "nanananananananabatman",
-			"HOST": "batcave",
-			"LOGS": {
-				"ERROR LOG": "\/var\/log\/apache2\/error.log",
-				"ACCESS LOG": "\/var\/log\/apache2\/access.log"
-			},
+			"USER": "Rparham",
+			"PASS": "9999",
+			"HOST": "127.0.0.1",
+			"LOGS": [
+				"\/Applications\/XAMPP\/xamppfiles\/logs\/php_error_log"
+			],
 			"THEME": "skin-purple",
 			"DEFAULT": true
+		},
+		"Lando": {
+			"USER": "root",
+			"PASS": "ourtown1972",
+			"HOST": "lando.ourtownamerica.com",
+			"LOGS": {
+				"Error Log": "\/var\/log\/httpd\/error_log",
+				"Access Log": "\/var\/log\/httpd\/access_log"
+			},
+			"THEME": "DEFAULT",
+			"DEFAULT": false
 		}
 	},
 	"theme": "skin-yellow-light",
 	"last_update": "2017-04-13T04:41:47Z",
-	"use_cookies": true
+	"use_cookies": false,
+	"ill_terminal": {
+		"in": "",
+		"out": ""
+	}
 }

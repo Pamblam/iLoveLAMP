@@ -15,6 +15,62 @@ checkParams(array("action"));
 
 switch($_REQUEST['action']){
 		
+	case "terminal":
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		if(isset($config['ill_terminal'])){
+			$out = $config['ill_terminal']['out'];
+			if(isset($_REQUEST['cmd'])){
+				$config['ill_terminal']['in'] = $_REQUEST['cmd'];
+				$config['ill_terminal']['out'] = "";
+				$json = json($config);
+				$fh = fopen("config.json", "w+");
+				if($fh===false) oops("Can't open config file.");
+				if(fwrite($fh, $json) === false) oops("Can't write to config file.");
+				fclose($fh);
+			}
+			$return['response'] = "Success";
+			$return['data'] = $out;
+			output();
+		}else{
+			// create a new terminal session
+			require realpath(dirname(__FILE__))."/classes/asyncTask.php";
+			require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
+			$config['ill_terminal'] = array("in"=>"", "out"=>"");
+			$json = json($config);
+			$fh = fopen("config.json", "w+");
+			if($fh===false) oops("Can't open config file.");
+			if(fwrite($fh, $json) === false) oops("Can't write to config file.");
+			fclose($fh);
+			$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
+			if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
+			$config['ill_terminal']['out'] = $ssh->read('/[$|#]/', \phpseclib\Net\SSH2::READ_REGEX);
+			if(isset($_REQUEST['cmd'])) $config['ill_terminal']['in'] = $_REQUEST['cmd'];
+			asyncPage::startOutput();
+			$return['response'] = "Starting terminal session";
+			$return['data'] = array();
+			header("Content-Type: application/json");
+			echo json($GLOBALS['return']);
+			asyncPage::sendOutput();
+			// start the loop
+			while(isset($config['ill_terminal'])){
+				$config = file_get_contents("config.json");
+				$config = json_decode($config, true);
+				if(!empty($config['ill_terminal']['in'])){
+					$ssh->write($config['ill_terminal']['in']."\n");
+					$config['ill_terminal']['in'] = "";
+					$config['ill_terminal']['out'] = $ssh->read('/[$|#]/', \phpseclib\Net\SSH2::READ_REGEX);
+					$json = json($config);
+					$fh = fopen("config.json", "w+");
+					if($fh===false) oops("Can't open config file.");
+					if(fwrite($fh, $json) === false) oops("Can't write to config file.");
+					fclose($fh);
+				}
+				sleep(3);
+			}
+		}
+		break;
+	
 	case "do_update";
 		$config = file_get_contents("config.json");
 		$config = json_decode($config, true);
@@ -50,7 +106,7 @@ switch($_REQUEST['action']){
 		$config = file_get_contents("config.json");
 		$config = json_decode($config, true);
 		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_POST['server']]['HOST']);
-		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oopsie('Login Failed');
+		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oops('Login Failed');
 		$pman = new pMan($ssh);
 		$return['data'] = $pman->plist();
 		$return['response'] = "Gathered processes.";
@@ -64,7 +120,7 @@ switch($_REQUEST['action']){
 		$config = file_get_contents("config.json");
 		$config = json_decode($config, true);
 		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_POST['server']]['HOST']);
-		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oopsie('Login Failed');
+		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oops('Login Failed');
 		$raw = $ssh->exec("kill -9 {$_POST['pid']}");
 		$return['data'] = $raw;
 		$return['response'] = "Killed process {$_POST['pid']}.";
@@ -107,7 +163,7 @@ switch($_REQUEST['action']){
 		$config = json_decode($config, true);
 		
 		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_POST['server']]['HOST']);
-		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oopsie('Login Failed');
+		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oops('Login Failed');
 		$raw = $ssh->exec("tail -n 100 {$config['servers'][$_POST['server']]['LOGS'][$_POST['log']]}");
 		$return['response'] = "Gatheered logs.";
 		$return['data'] = $raw;
