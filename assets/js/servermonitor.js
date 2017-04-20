@@ -30,6 +30,27 @@ var iLoveLAMP = (function ($) {
 		return false;
 	});
 	
+	function createCookie(name,value,days) {
+		if (days) {
+			var date = new Date();
+			date.setTime(date.getTime()+(days*24*60*60*1000));
+			var expires = "; expires="+date.toGMTString();
+		}
+		else var expires = "";
+		document.cookie = name+"="+value+expires+"; path=/";
+	}
+
+	function readCookie(name) {
+		var nameEQ = name + "=";
+		var ca = document.cookie.split(';');
+		for(var i=0;i < ca.length;i++) {
+			var c = ca[i];
+			while (c.charAt(0)==' ') c = c.substring(1,c.length);
+			if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+		}
+		return null;
+	}
+	
 	var AllServers = {};
 	var currentTheme = false;
 	
@@ -51,11 +72,14 @@ var iLoveLAMP = (function ($) {
 		},
 		
 		setServer: function(serverName){
+			if(iLoveLAMP.illSettings.use_cookies) createCookie("currentServer", serverName, 365);
 			iLoveLAMP.currentServer = serverName;
 			var theme = AllServers.data[serverName].THEME;
 			if(theme === "DEFAULT") theme = iLoveLAMP.illSettings.theme;
 			iLoveLAMP.setTheme(theme);
 			$("#current_server_display_name").html(serverName);
+			// reload current module, if there is a current module
+			if(iLoveLAMP.currentModule) iLoveLAMP.loadPage(iLoveLAMP.currentModule);
 		},
 		
 		setUp: function(cb, forceReset){
@@ -115,7 +139,7 @@ var iLoveLAMP = (function ($) {
 		
         loadPage: function (page) {
 			iLoveLAMP.getServers(function(resp){
-				if((iLoveLAMP.modules[page].requiresServer && !iLoveLAMP.currentServer) || Object.keys(AllServers).length < 1) 
+				if((iLoveLAMP.modules[page].requiresServer && iLoveLAMP.modules[page].requiresServer && !iLoveLAMP.currentServer) || Object.keys(AllServers).length < 1) 
 					return iLoveLAMP.showErrorPage("This module requires a server. Choose one by clicking the Servers icon in the top right, or add one in the 'Servers' module.");
 				if(iLoveLAMP.currentModule !== false && iLoveLAMP.modules[iLoveLAMP.currentModule].exit) iLoveLAMP.modules[iLoveLAMP.currentModule].exit()
 				iLoveLAMP.currentModule = page;
@@ -163,9 +187,13 @@ var iLoveLAMP = (function ($) {
 			if("function" !== typeof callback) callback = function(){};
 			iLoveLAMP.getServers(function(resp){
 				$(".servercount").html(Object.keys(resp.data).length);
-				for(var server in resp.data)
-					if(resp.data.hasOwnProperty(server) && resp.data[server].DEFAULT && resp.data[server].DEFAULT === true)
-						iLoveLAMP.setServer(server);
+				if(!iLoveLAMP.illSettings.use_cookies || !readCookie("currentServer")){
+					for(var server in resp.data)
+						if(resp.data.hasOwnProperty(server) && resp.data[server].DEFAULT && resp.data[server].DEFAULT === true)
+							iLoveLAMP.setServer(server);
+				}else{
+					iLoveLAMP.setServer(readCookie("currentServer"));
+				}
 				if(!iLoveLAMP.currentServer && Object.keys(resp.data).length > 0) iLoveLAMP.chooseServer(callback);
 				else if(Object.keys(resp.data).length > 0){
 					callback();

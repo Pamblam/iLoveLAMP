@@ -6,12 +6,14 @@ iLoveLAMP.modules.settings = (function(){
 		iLoveLAMP.setUp(function(){
 			checkForUpdates();
 			var lastUpdate = new Date(iLoveLAMP.illSettings.last_update).format("m/d/y g:i a");
+			if(iLoveLAMP.illSettings.use_cookies !== false) $("#use_cookies").prop("checked", true);
 			$("#lastUpdateTime").text(lastUpdate);
 			$("#default_theme").val(iLoveLAMP.illSettings.theme);
 			$("#submit_settings_changes").click(function(){
 				$("html, body").animate({ scrollTop: 0 }, "slow");
 				var settings = {
-					theme: $("#default_theme").val()
+					theme: $("#default_theme").val(),
+					use_cookies: $("#use_cookies").is(":checked")
 				};
 				iLoveLAMP.changeSettings(settings, function(resp){
 					if(resp.success){

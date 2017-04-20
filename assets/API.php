@@ -46,11 +46,10 @@ switch($_REQUEST['action']){
 	case "get_processes":
 		require realpath(dirname(__FILE__))."/classes/pman.php";
 		checkParams(array("server"));
-		set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__))."/classes/sshlib");
-		require 'Net/SSH2.php';
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
 		$config = file_get_contents("config.json");
 		$config = json_decode($config, true);
-		$ssh = new Net_SSH2($config['servers'][$_POST['server']]['HOST']);
+		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_POST['server']]['HOST']);
 		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oopsie('Login Failed');
 		$pman = new pMan($ssh);
 		$return['data'] = $pman->plist();
@@ -61,11 +60,10 @@ switch($_REQUEST['action']){
 	case "kill_process":
 		require realpath(dirname(__FILE__))."/classes/pman.php";
 		checkParams(array("server", "pid"));
-		set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__))."/classes/sshlib");
-		require 'Net/SSH2.php';
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
 		$config = file_get_contents("config.json");
 		$config = json_decode($config, true);
-		$ssh = new Net_SSH2($config['servers'][$_POST['server']]['HOST']);
+		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_POST['server']]['HOST']);
 		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oopsie('Login Failed');
 		$raw = $ssh->exec("kill -9 {$_POST['pid']}");
 		$return['data'] = $raw;
@@ -104,12 +102,11 @@ switch($_REQUEST['action']){
 	
 	case "get_logs":
 		checkParams(array("server", "log"));
-		set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__))."/classes/sshlib");
-		require 'Net/SSH2.php';
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
 		$config = file_get_contents("config.json");
 		$config = json_decode($config, true);
 		
-		$ssh = new Net_SSH2($config['servers'][$_POST['server']]['HOST']);
+		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_POST['server']]['HOST']);
 		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oopsie('Login Failed');
 		$raw = $ssh->exec("tail -n 100 {$config['servers'][$_POST['server']]['LOGS'][$_POST['log']]}");
 		$return['response'] = "Gatheered logs.";
@@ -118,8 +115,7 @@ switch($_REQUEST['action']){
 		break;
 	
 	case "get_settings":
-		set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__))."/classes/sshlib");
-		require 'Net/SSH2.php';
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
 		$config = file_get_contents("config.json");
 		$config = json_decode($config, true);
 		unset($config['servers']);
@@ -129,13 +125,13 @@ switch($_REQUEST['action']){
 		break;
 	
 	case "set_settings":
-		set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__))."/classes/sshlib");
-		require 'Net/SSH2.php';
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
 		$config = file_get_contents("config.json");
 		$config = json_decode($config, true);
-		foreach($_REQUEST['settings'] as $setting=>$val)
+		foreach($_REQUEST['settings'] as $setting=>$val){
+			if($setting === "use_cookies") $val = $val === "true";
 			$config[$setting] = $val;
-		
+		}
 		$json = json($config);
 		$fh = fopen("config.json", "w+");
 		if($fh===false) oops("Can't open config file.");
@@ -147,8 +143,7 @@ switch($_REQUEST['action']){
 		break;
 		
 	case "check_server":
-		set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__))."/classes/sshlib");
-		require 'Net/SSH2.php';
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
 		$servers = file_get_contents("config.json");
 		$servers = json_decode($servers, true);
 		$pass = empty($_REQUEST['server']['pass']) ? false : $_REQUEST['server']['pass'];
@@ -158,7 +153,7 @@ switch($_REQUEST['action']){
 				if($name === $_REQUEST['server']['orig_name'])
 					$pass = $config['PASS'];
 		try{
-			$ssh = new Net_SSH2($_REQUEST['server']['host']);
+			$ssh = new \phpseclib\Net\SSH2($_REQUEST['server']['host']);
 			if(!$ssh->login($_REQUEST['server']['user'], $pass)) 
 				oops("Could not login. Invalid host, user or password.");
 		}catch(Exception $e){ 
@@ -184,7 +179,7 @@ switch($_REQUEST['action']){
 				"USER"=> $_REQUEST['server']['user'],
 				"PASS"=> $pass,
 				"HOST"=> $_REQUEST['server']['host'],
-				"LOGS"=> $_REQUEST['server']['logs'],
+				"LOGS"=> isset($_REQUEST['server']['logs']) ? $_REQUEST['server']['logs'] : array(),
 				"THEME"=> $_REQUEST['server']['theme'],
 				"DEFAULT"=> !empty($_REQUEST['server']['default'])
 			);
@@ -193,7 +188,7 @@ switch($_REQUEST['action']){
 				"USER"=> $_REQUEST['server']['user'],
 				"PASS"=> $pass,
 				"HOST"=> $_REQUEST['server']['host'],
-				"LOGS"=> $_REQUEST['server']['logs'],
+				"LOGS"=> isset($_REQUEST['server']['logs']) ? $_REQUEST['server']['logs'] : array(),
 				"THEME"=> $_REQUEST['server']['theme'],
 				"DEFAULT"=> !empty($_REQUEST['server']['default'])
 			);

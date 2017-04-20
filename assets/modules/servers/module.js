@@ -81,7 +81,7 @@ iLoveLAMP.modules.servers = (function(){
 				if([server.new_name, server.host, server.user].indexOf("") > -1)  return showError("Title, host, user and password are required.");
 				if($("#is_default_server").is(":checked")){
 					for(var s in resp.data){
-						if(!resp.data.hasOwnProperty(s)) continue;
+						if(!resp.data.hasOwnProperty(s) && resp.data[s] !== undefined) continue;
 						resp.data[s].DEFAULT = false;
 					}
 					if("NEW"!==server.orig_name) resp.data[server.orig_name].DEFAULT = true;
