@@ -16,6 +16,14 @@ checkParams(array("action"));
 switch($_REQUEST['action']){
 		
 	case "terminal":
+		checkParams(array("server"));
+		require realpath(dirname(__FILE__))."/classes/asyncTask.php";
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
+		require realpath(dirname(__FILE__))."/classes/Terminal.php";
+		if(isset($_REQUEST['cmd'])) Terminal::addCommand($_REQUEST['cmd']);
+		Terminal::init($_REQUEST['server']);
+		Terminal::output();
+		exit;
 		$config = file_get_contents("config.json");
 		$config = json_decode($config, true);
 		if(isset($config['ill_terminal'])){
