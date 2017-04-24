@@ -20,9 +20,22 @@ switch($_REQUEST['action']){
 		require realpath(dirname(__FILE__))."/classes/asyncTask.php";
 		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
 		require realpath(dirname(__FILE__))."/classes/Terminal.php";
+		
+//		$config = file_get_contents("config.json");
+//		$config = json_decode($config, true);
+//		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
+//		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed'); // defined in API.php
+//		echo "<pre>";
+//		echo $ssh->exec('cd /');
+//		echo $ssh->exec('pwd');
+//		echo $ssh->exec('ls -la');
+//		
+//		exit;
+		
 		if(isset($_REQUEST['cmd'])) Terminal::addCommand($_REQUEST['cmd']);
 		Terminal::init($_REQUEST['server']);
-		Terminal::output();
+		Terminal::output();		
+		
 		exit;
 		$config = file_get_contents("config.json");
 		$config = json_decode($config, true);
