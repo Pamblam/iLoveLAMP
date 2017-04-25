@@ -15,6 +15,19 @@ checkParams(array("action"));
 
 switch($_REQUEST['action']){
 	
+	case "quickide_run":
+		checkParams(array("code"));
+		$ideScriptsPath = realpath(dirname(__FILE__))."/modules/ide/idescripts";
+		$time = microtime();
+		$tempName = "$ideScriptsPath/$time.php";
+		$fh = fopen($tempName, "w+");
+		fwrite($fh, $_REQUEST['code']);
+		fclose($fh);
+		require($tempName);
+		unlink($tempName);
+		exit;
+		break;
+	
 	case "dlshell":
 		checkParams(array("server"));
 		$config = file_get_contents("config.json");
