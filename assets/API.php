@@ -15,6 +15,73 @@ checkParams(array("action"));
 
 switch($_REQUEST['action']){
 	
+	case "quickide_get":
+		$data = array();
+		$ideScriptsPath = realpath(dirname(__FILE__))."/modules/ide/idescripts";
+		$scripts = scandir($ideScriptsPath);
+		foreach($scripts as $script){
+			if($script == "." || $script == "..") continue;
+			$scriptCode = file_get_contents("$ideScriptsPath/$script");
+			$endComment = strpos($scriptCode, "?>");
+			if($endComment === false) continue;
+			$json = trim(substr($scriptCode, 0, $endComment), " /?<ph>");
+			$details = json_decode($json, true);
+			$code = substr($scriptCode, $endComment+2);
+			$details['code'] = $code;
+			$details['filename'] = $script;
+			$data = $details;
+		}
+		$return['response'] = "Gathered All QuickIDE Scripts.";
+		$return['data'] = $data;
+		output();
+		break;
+	
+	case "quickide_save":
+		checkParams(array("code"));
+		$code = $_REQUEST['code'];
+		$name = isset($_REQUEST['name']) ? $_REQUEST['name'] : false;
+		$scriptFileName = false;
+		$untitledCnt = 0;
+		
+		// Check if there is an existing script with this name already
+		$ideScriptsPath = realpath(dirname(__FILE__))."/modules/ide/idescripts";
+		$scripts = scandir($ideScriptsPath);
+		foreach($scripts as $script){
+			if($script == "." || $script == "..") continue;
+			$scriptCode = file_get_contents("$ideScriptsPath/$script");
+			$endComment = strpos($scriptCode, "?>");
+			if($endComment === false) continue;
+			$json = trim(substr($scriptCode, 0, $endComment), " /?<ph>");
+			$details = json_decode($json, true);
+			if($details['name'] === $name){
+				$scriptFileName = $script;
+				break;
+			}else if(strpos($details['name'], "Untitled ") === 0){
+				$ucnt = intval(substr($details['name'], 9));
+				if($untitledCnt <= $ucnt) $untitledCnt = $ucnt+1;
+			}
+		}
+		
+		if(!$scriptFileName) $scriptFileName = microtime().".php";
+		if(!$name) $name = "Untitled $untitledCnt";
+		
+		$details = array(
+			"lastEdit" => date("d//m/y g:i a"),
+			"name" => $name
+		);
+				
+		$code = "<?php // ".json_encode($details)." ?>$code";
+		
+		$tempName = "$ideScriptsPath/$scriptFileName";
+		$fh = fopen($tempName, "w+");
+		fwrite($fh, $code);
+		fclose($fh);
+		
+		$return['response'] = "Saved script";
+		$return['data'] = $details;
+		output();
+		break;
+	
 	case "quickide_run":
 		checkParams(array("code"));
 		$ideScriptsPath = realpath(dirname(__FILE__))."/modules/ide/idescripts";
