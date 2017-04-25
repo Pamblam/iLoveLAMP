@@ -1,17 +1,51 @@
 
 
 iLoveLAMP.modules.terminal = (function(){
+	var persistCommands = [];
+	var persisttNext = false;
 	
 	function init(){
-		$("#terminal").Terminal({
-			hostname: "browser",
-			username: "javascript",
-			io: function(input, output, done){
-				var out;
-				try{ out= eval(input); }
-				catch(e){ out = e.message; }
-				if(["string", "number"].indexOf(typeof out) > -1) output(out);
-				done();
+		persistCommands = [];
+		persisttNext = false;
+		iLoveLAMP.getServer(iLoveLAMP.currentServer, function(server){
+			$("#terminal").Terminal({
+				hostname: server.HOST,
+				username: server.USER,
+				io: function(input, output, done){
+					if(persistCommands.length) input = persistCommands.join("; ")+"; "+input;
+					if(persisttNext) persistCommands.push(input);
+					$.ajax({
+						url: "./assets/API.php",
+						data: {action: "terminal", server: iLoveLAMP.currentServer, cmd: input},
+						type: "POST"
+					}).done(function(resp){
+						persisttNext = false;
+						$("#persistcmdbtn").removeClass("btn-success").addClass("btn-primary").html('<span class="glyphicon glyphicon-flag"></span> Persist Next Command');
+						output(resp.data);
+						done();
+					});
+				}
+			});
+		});
+		$("#dlshell").click(function(e){
+			e.preventDefault();
+			$f = $("<form action=./assets/api.php method=POST>")
+					.append("<input type=hidden name=server value='"+iLoveLAMP.currentServer+"' />")
+					.append("<input type=hidden name=action value='dlshell' />")
+					.appendTo('body')
+					.submit()
+					.remove();
+			var text = "Before the shell script can be run, you need to make it executable:"+
+				"<pre><code>sudo chmod +x /path/to/script</code></pre>";
+			iLoveLAMP.BSAlert(text);
+		});
+		$("#persistcmdbtn").click(function(e){
+			e.preventDefault();
+			persisttNext = !persisttNext;
+			if(persisttNext){
+				$(this).removeClass("btn-primary").addClass("btn-success").html('<span class="glyphicon glyphicon-flag"></span> Persisting...');
+			}else{
+				$(this).removeClass("btn-success").addClass("btn-primary").html('<span class="glyphicon glyphicon-flag"></span> Persist Next Command');
 			}
 		});
 	}

@@ -7,6 +7,10 @@
 
 <div class="row pad-top">
 	<div class="col-lg-12">
+		<p>This is a <b>non-interactive</b> shell. For basic commands that require persistence (like <code>cd</code>) you can press the <b>Persist Next Command</b> button, and that command will automatically be run before each subsequent command. If you require a truly interactive shell, you can download a shell script that will SSH into the server.</p>
+		<button type="button" class="btn btn-primary" id="persistcmdbtn"><span class="glyphicon glyphicon-flag"></span> Persist Next Command</button>
+		<button type="button" class="btn btn-info" id="dlshell"><span class="glyphicon glyphicon-floppy-save"></span> DL Interactive Shell</button>
+		<div style="height:3px;"></div>
 		<textarea id="terminal"></textarea>
 	</div>
 </div>

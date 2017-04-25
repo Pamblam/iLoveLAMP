@@ -14,82 +14,33 @@ $return = array(
 checkParams(array("action"));
 
 switch($_REQUEST['action']){
-		
-	case "terminal":
+	
+	case "dlshell":
 		checkParams(array("server"));
-		require realpath(dirname(__FILE__))."/classes/asyncTask.php";
-		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-		require realpath(dirname(__FILE__))."/classes/Terminal.php";
-		
-//		$config = file_get_contents("config.json");
-//		$config = json_decode($config, true);
-//		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
-//		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed'); // defined in API.php
-//		echo "<pre>";
-//		echo $ssh->exec('cd /');
-//		echo $ssh->exec('pwd');
-//		echo $ssh->exec('ls -la');
-//		
-//		exit;
-		
-		if(isset($_REQUEST['cmd'])) Terminal::addCommand($_REQUEST['cmd']);
-		Terminal::init($_REQUEST['server']);
-		Terminal::output();		
-		
-		exit;
 		$config = file_get_contents("config.json");
 		$config = json_decode($config, true);
-		if(isset($config['ill_terminal'])){
-			$out = $config['ill_terminal']['out'];
-			if(isset($_REQUEST['cmd'])){
-				$config['ill_terminal']['in'] = $_REQUEST['cmd'];
-				$config['ill_terminal']['out'] = "";
-				$json = json($config);
-				$fh = fopen("config.json", "w+");
-				if($fh===false) oops("Can't open config file.");
-				if(fwrite($fh, $json) === false) oops("Can't write to config file.");
-				fclose($fh);
-			}
-			$return['response'] = "Success";
-			$return['data'] = $out;
-			output();
-		}else{
-			// create a new terminal session
-			require realpath(dirname(__FILE__))."/classes/asyncTask.php";
-			require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-			$config['ill_terminal'] = array("in"=>"", "out"=>"");
-			$json = json($config);
-			$fh = fopen("config.json", "w+");
-			if($fh===false) oops("Can't open config file.");
-			if(fwrite($fh, $json) === false) oops("Can't write to config file.");
-			fclose($fh);
-			$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
-			if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
-			$config['ill_terminal']['out'] = $ssh->read('/[$|#]/', \phpseclib\Net\SSH2::READ_REGEX);
-			if(isset($_REQUEST['cmd'])) $config['ill_terminal']['in'] = $_REQUEST['cmd'];
-			asyncPage::startOutput();
-			$return['response'] = "Starting terminal session";
-			$return['data'] = array();
-			header("Content-Type: application/json");
-			echo json($GLOBALS['return']);
-			asyncPage::sendOutput();
-			// start the loop
-			while(isset($config['ill_terminal'])){
-				$config = file_get_contents("config.json");
-				$config = json_decode($config, true);
-				if(!empty($config['ill_terminal']['in'])){
-					$ssh->write($config['ill_terminal']['in']."\n");
-					$config['ill_terminal']['in'] = "";
-					$config['ill_terminal']['out'] = $ssh->read('/[$|#]/', \phpseclib\Net\SSH2::READ_REGEX);
-					$json = json($config);
-					$fh = fopen("config.json", "w+");
-					if($fh===false) oops("Can't open config file.");
-					if(fwrite($fh, $json) === false) oops("Can't write to config file.");
-					fclose($fh);
-				}
-				sleep(3);
-			}
-		}
+		$script = '#!/usr/bin/expect -f'."\n".
+			'spawn ssh '.$config['servers'][$_REQUEST['server']]['USER'].'@'.$config['servers'][$_REQUEST['server']]['HOST']."\n".
+			'expect "assword:"'."\n".
+			'send "'.$config['servers'][$_REQUEST['server']]['PASS'].'\r"'."\n".
+			'interact;';
+		header("Content-Type: text/x-shellscript");
+		header("Content-Transfer-Encoding: Binary");
+		header("Content-disposition: attachment; filename=\"".$_REQUEST['server'].".sh\""); 
+		echo $script;
+		break;
+	
+	case "terminal":
+		checkParams(array("server", "cmd"));
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
+		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
+		$raw = $ssh->exec("{$_REQUEST['cmd']}");
+		$return['response'] = "Ran command";
+		$return['data'] = $raw;
+		output();
 		break;
 	
 	case "do_update";
