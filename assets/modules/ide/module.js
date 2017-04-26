@@ -3,18 +3,6 @@
 iLoveLAMP.modules.ide = (function(){
 	
 	var activeScript = false;
-	
-	function b64EncodeUnicode(str) {
-		return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-			return String.fromCharCode('0x' + p1);
-		}));
-	}
-	
-	function b64DecodeUnicode(str) {
-		return decodeURIComponent(atob(str).split('').map(function(c) {
-			return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-		}).join(''));
-	}
 
 	var newScript = '<html>\n\t<head>\n\t\t<title>QuickFiddle (<'+'?php echo basename(__FILE__); ?>)</title>\n\t\t<style>\n\t\t\tbody{ margin:2em 10%; }\n\t\t</style>\n\t</head>\n\t<body>\n\t\t<div id="myDiv">Loading...</div>\n\t\t<script src="//code.jquery.com/jquery-2.2.4.min.js"></scri'+'pt>\n\t\t<script>\n\t\t\t$(function(){\n\t\t\t\t$("#myDiv").html("<b>Hello, world!</b>");\n\t\t\t});\n\t\t</sc'+'ript>\n\t</body>\n</html>';
 	
@@ -50,7 +38,7 @@ iLoveLAMP.modules.ide = (function(){
 		loadAllScripts(editor);
 		
 		$("#ideDeleteBtn").click(function(e){
-			e.preventDefault(e);
+			e.preventDefault();
 			if(activeScript === false){
 				$(this).hide();
 				return;
@@ -69,7 +57,7 @@ iLoveLAMP.modules.ide = (function(){
 		});
 		
 		$("#iderunbtn").click(function(e){
-			e.preventDefault(e);
+			e.preventDefault();
 			var target = $("input[name='idetarget']:checked").val();
 			var code = editor.getValue();
 			var form = $("<form action=./assets/API.php method=POST target="+target+">");
@@ -85,9 +73,18 @@ iLoveLAMP.modules.ide = (function(){
 			}
 		});
 		
-		$("#closePreview").click(function(){
+		$("#closePreview").click(function(e){
+			e.preventDefault();
 			$("iframe[name='ideFrame']").slideUp();
 			$(this).hide();
+		});
+		
+		$("#ideNewBtn").click(function(e){
+			e.preventDefault();
+			activeScript = false;
+			$("#idescriptname").val('');
+			$("#ideDeleteBtn").hide();
+			editor.getDoc().setValue(newScript);
 		});
 		
 		$("#ideSaveBtn").click(function(e){
