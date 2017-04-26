@@ -16,6 +16,7 @@ checkParams(array("action"));
 switch($_REQUEST['action']){
 	
 	case "quickide_get":
+		header('X-XSS-Protection: 0');
 		$data = array();
 		$ideScriptsPath = realpath(dirname(__FILE__))."/modules/ide/idescripts";
 		$scripts = scandir($ideScriptsPath);
@@ -29,7 +30,7 @@ switch($_REQUEST['action']){
 			$code = substr($scriptCode, $endComment+2);
 			$details['code'] = $code;
 			$details['filename'] = $script;
-			$data = $details;
+			$data[] = $details;
 		}
 		$return['response'] = "Gathered All QuickIDE Scripts.";
 		$return['data'] = $data;
@@ -37,9 +38,10 @@ switch($_REQUEST['action']){
 		break;
 	
 	case "quickide_save":
+		header('X-XSS-Protection: 0');
 		checkParams(array("code"));
 		$code = $_REQUEST['code'];
-		$name = isset($_REQUEST['name']) ? $_REQUEST['name'] : false;
+		$name = !empty($_REQUEST['name']) ? $_REQUEST['name'] : false;
 		$scriptFileName = false;
 		$untitledCnt = 0;
 		
@@ -81,8 +83,37 @@ switch($_REQUEST['action']){
 		$return['data'] = $details;
 		output();
 		break;
-	
+
+	case "quickide_delete":
+		header('X-XSS-Protection: 0');
+		checkParams(array("name"));
+		$name = $_REQUEST['name'];
+		$scriptFileName = false;
+		
+		$ideScriptsPath = realpath(dirname(__FILE__))."/modules/ide/idescripts";
+		$scripts = scandir($ideScriptsPath);
+		foreach($scripts as $script){
+			if($script == "." || $script == "..") continue;
+			$scriptCode = file_get_contents("$ideScriptsPath/$script");
+			$endComment = strpos($scriptCode, "?>");
+			if($endComment === false) continue;
+			$json = trim(substr($scriptCode, 0, $endComment), " /?<ph>");
+			$details = json_decode($json, true);
+			if($details['name'] === $name){
+				$r = unlink("$ideScriptsPath/$script");
+				$return['response'] = $r ? "Deleted script" : "Unable to delete script";
+				$return['success'] = $r;
+				output();
+				exit;
+			}
+		}
+		$return['response'] = "Script not found.";
+		$return['success'] = false;
+		output();
+		break;
+
 	case "quickide_run":
+		header('X-XSS-Protection: 0');
 		checkParams(array("code"));
 		$ideScriptsPath = realpath(dirname(__FILE__))."/modules/ide/idescripts";
 		$time = microtime();
