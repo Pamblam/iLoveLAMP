@@ -12,7 +12,7 @@
 			<div class="alert alert-danger" id="settings_mod_error" style="display:none;"></div>
 			<div class="alert alert-success" id="settings_mod_success" style="display:none;"></div>
 			
-			<h2>Updates.</h2>
+			<h2>Updates</h2>
 			<p><b>iLove</b>LAMP was last updated <span id="lastUpdateTime"></span>. <span id="updateText"></span></p>
 			<div id="updatestatus"></div>
 			
@@ -40,6 +40,143 @@
 			<div class="checkbox">
 				<label><input type="checkbox" id="use_cookies" value="1">Use cookies</label>
 			</div>
+			
+			<h2>File Types</h2>
+			<table class="table table-bordered table-striped table-hover table-condensed">
+				<thead>
+					<tr>
+						<th>File Type</th>
+						<th>Open With</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							<b>Hidden Files</b>
+						</td>
+						<td>
+							<div class="form-group">
+								<select class="form-control" id="hidden_files_setting">
+									<option value="new_tab">New Tab (in browser)</option>
+									<option value="qide">Quick IDE</option>
+									<option value="download" selected>Download</option>
+								</select>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<b>Images (PNG, JPEG, GIF)</b>
+						</td>
+						<td>
+							<div class="form-group">
+								<select class="form-control" id="image_files_setting">
+									<option value="new_tab">New Tab (in browser)</option>
+									<option value="modal" selected>Modal</option>
+									<option value="download">Download</option>
+								</select>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<b>HTML (HTML, HTM, XHTML)</b>
+						</td>
+						<td>
+							<div class="form-group">
+								<select class="form-control" id="html_files_setting">
+									<option value="new_tab">New Tab (in browser)</option>
+									<option value="qide" selected>Quick IDE</option>
+									<option value="download">Download</option>
+								</select>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<b>PHP</b>
+						</td>
+						<td>
+							<div class="form-group">
+								<select class="form-control" id="php_files_setting">
+									<option value="qide" selected>Quick IDE</option>
+									<option value="download">Download</option>
+								</select>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<b>Javascript</b>
+						</td>
+						<td>
+							<div class="form-group">
+								<select class="form-control" id="js_files_setting">
+									<option value="new_tab" selected>New Tab (in browser)</option>
+									<option value="qide" selected>Quick IDE</option>
+									<option value="download">Download</option>
+								</select>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<b>CSS</b>
+						</td>
+						<td>
+							<div class="form-group">
+								<select class="form-control" id="css_files_setting">
+									<option value="new_tab" selected>New Tab (in browser)</option>
+									<option value="qide" selected>Quick IDE</option>
+									<option value="download">Download</option>
+								</select>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<b>Plaintext</b>
+						</td>
+						<td>
+							<div class="form-group">
+								<select class="form-control" id="plaintext_files_setting">
+									<option value="new_tab" selected>New Tab (in browser)</option>
+									<option value="qide" selected>Quick IDE</option>
+									<option value="download">Download</option>
+								</select>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<b>PDF</b>
+						</td>
+						<td>
+							<div class="form-group">
+								<select class="form-control" id="pdf_files_setting">
+									<option value="new_tab">New Tab (in browser)</option>
+									<option value="qide" selected>Quick IDE</option>
+									<option value="modal" selected>Modal</option>
+									<option value="download">Download</option>
+								</select>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<b>Anything else</b>
+						</td>
+						<td>
+							<div class="form-group">
+								<select class="form-control" id="other_files_setting">
+									<option value="new_tab">New Tab (in browser)</option>
+									<option value="download" selected>Download</option>
+								</select>
+							</div>
+						</td>
+					</tr>
+				</tbody>				
+			</table>
 			
 			<hr>
 			<button type="button" class="btn btn-primary" id="submit_settings_changes">Save Changes</button>

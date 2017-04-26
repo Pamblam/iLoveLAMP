@@ -29,7 +29,7 @@ iLoveLAMP.modules.terminal = (function(){
 		});
 		$("#dlshell").click(function(e){
 			e.preventDefault();
-			$f = $("<form action=./assets/api.php method=POST>")
+			$f = $("<form action=./assets/API.php method=POST>")
 					.append("<input type=hidden name=server value='"+iLoveLAMP.currentServer+"' />")
 					.append("<input type=hidden name=action value='dlshell' />")
 					.appendTo('body')

@@ -9,11 +9,32 @@ iLoveLAMP.modules.settings = (function(){
 			if(iLoveLAMP.illSettings.use_cookies !== false) $("#use_cookies").prop("checked", true);
 			$("#lastUpdateTime").text(lastUpdate);
 			$("#default_theme").val(iLoveLAMP.illSettings.theme);
+			
+			// preset some stuff
+			if(iLoveLAMP.illSettings.ft_hidden_files) $("#hidden_files_setting").val(iLoveLAMP.illSettings.ft_hidden_files);
+			if(iLoveLAMP.illSettings.ft_image_files) $("#image_files_setting").val(iLoveLAMP.illSettings.ft_image_files);
+			if(iLoveLAMP.illSettings.ft_html_files) $("#html_files_setting").val(iLoveLAMP.illSettings.ft_html_files);
+			if(iLoveLAMP.illSettings.ft_js_files) $("#js_files_setting").val(iLoveLAMP.illSettings.ft_js_files);
+			if(iLoveLAMP.illSettings.ft_css_files) $("#css_files_setting").val(iLoveLAMP.illSettings.ft_css_files);
+			if(iLoveLAMP.illSettings.ft_plaintext_files) $("#plaintext_files_setting").val(iLoveLAMP.illSettings.ft_plaintext_files);
+			if(iLoveLAMP.illSettings.ft_pdf_files) $("#pdf_files_setting").val(iLoveLAMP.illSettings.ft_pdf_files);
+			if(iLoveLAMP.illSettings.ft_other_files) $("#other_files_setting").val(iLoveLAMP.illSettings.ft_other_files);
+			if(iLoveLAMP.illSettings.ft_php_files) $("#php_files_setting").val(iLoveLAMP.illSettings.ft_php_files);
+			
 			$("#submit_settings_changes").click(function(){
 				$("html, body").animate({ scrollTop: 0 }, "slow");
 				var settings = {
 					theme: $("#default_theme").val(),
-					use_cookies: $("#use_cookies").is(":checked")
+					use_cookies: $("#use_cookies").is(":checked"),
+					ft_hidden_files: $("#hidden_files_setting").val(),
+					ft_image_files: $("#image_files_setting").val(),
+					ft_html_files: $("#html_files_setting").val(),
+					ft_js_files: $("#js_files_setting").val(),
+					ft_css_files: $("#css_files_setting").val(),
+					ft_plaintext_files: $("#plaintext_files_setting").val(),
+					ft_pdf_files: $("#pdf_files_setting").val(),
+					ft_other_files: $("#other_files_setting").val(),
+					ft_php_files: $("#php_files_setting").val()
 				};
 				iLoveLAMP.changeSettings(settings, function(resp){
 					if(resp.success){

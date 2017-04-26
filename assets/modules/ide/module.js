@@ -22,6 +22,10 @@ iLoveLAMP.modules.ide = (function(){
 				$("#idescriptname").val(script.name);
 				activeScript = script.name;
 				$("#ideDeleteBtn").show();
+				$("#iderunbtn").show();
+				$("input[name='idetarget']").parent().show();
+				iLoveLAMP.modules.ide.preload = false;
+				$("#idescriptname").prop("disabled", false).removeProp('disabled');;
 			});
 		});
 	}
@@ -32,9 +36,31 @@ iLoveLAMP.modules.ide = (function(){
 		var editor = CodeMirror.fromTextArea($("#idecode")[0], {
 			mode:  "application/x-httpd-php",
 			lineNumbers: true,
-			value: "<html></html>"
+			value: "<html>Loading...</html>"
 		});
-		editor.getDoc().setValue(newScript);
+		var preload = iLoveLAMP.modules.ide.preload;
+		if(false === preload) editor.getDoc().setValue(newScript);
+		else{
+			// Get file contents
+			$.ajax({
+				url: "./assets/API.php", 
+				data: {
+					action: "download", 
+					path: iLoveLAMP.modules.ide.preload.filpath,
+					file: iLoveLAMP.modules.ide.preload.file,
+					server: iLoveLAMP.modules.ide.preload.server,
+					output: "show"
+				}
+			}).done(function(data){
+				iLoveLAMP.modules.ide.preload.code = data;
+				editor.getDoc().setValue(data);
+				$("#idescriptname").val(iLoveLAMP.modules.ide.preload.file);
+				$("#iderunbtn").hide();
+				$("input[name='idetarget']").parent().hide();
+				$("#idescriptname").prop("disabled", true);
+			});
+		}
+		
 		loadAllScripts(editor);
 		
 		$("#ideDeleteBtn").click(function(e){
@@ -53,6 +79,7 @@ iLoveLAMP.modules.ide = (function(){
 				activeScript = false;
 				$("#idescriptname").val('');
 				$("#ideDeleteBtn").hide();
+				$("input[name='idetarget']").hide();
 			});
 		});
 		
@@ -82,28 +109,51 @@ iLoveLAMP.modules.ide = (function(){
 		$("#ideNewBtn").click(function(e){
 			e.preventDefault();
 			activeScript = false;
-			$("#idescriptname").val('');
 			$("#ideDeleteBtn").hide();
-			editor.getDoc().setValue(newScript);
+			if(iLoveLAMP.modules.ide.preload === false){
+				$("#idescriptname").val('');
+				editor.getDoc().setValue(newScript);
+			}else editor.getDoc().setValue(iLoveLAMP.modules.ide.preload.code);
 		});
 		
 		$("#ideSaveBtn").click(function(e){
 			e.preventDefault(e);
-			var name = $("#idescriptname").val();
-			$("#ideSaveBtn").html('<span class="glyphicon glyphicon-floppy-save"></span> Saving...');
-			$("#ideSaveBtn").prop('disabled', true);
-			$.ajax({
-				url: "./assets/API.php",
-				data: {action: "quickide_save", code: editor.getValue(),  name: name},
-				type: "POST"
-			}).done(function(resp){
-				loadAllScripts(editor);
-				$("#ideSaveBtn").html('<span class="glyphicon glyphicon-floppy-disk"></span> Save');
-				$("#ideSaveBtn").prop('disabled', false).removeProp('disabled');
-				activeScript = resp.data.name;
-				$("#idescriptname").val(activeScript);
-				$("#ideDeleteBtn").show();
-			});
+			if(iLoveLAMP.modules.ide.preload === false){
+				var name = $("#idescriptname").val();
+				$("#ideSaveBtn").html('<span class="glyphicon glyphicon-floppy-save"></span> Saving...');
+				$("#ideSaveBtn").prop('disabled', true);
+				$.ajax({
+					url: "./assets/API.php",
+					data: {action: "quickide_save", code: editor.getValue(),  name: name},
+					type: "POST"
+				}).done(function(resp){
+					loadAllScripts(editor);
+					$("#ideSaveBtn").html('<span class="glyphicon glyphicon-floppy-disk"></span> Save');
+					$("#ideSaveBtn").prop('disabled', false).removeProp('disabled');
+					activeScript = resp.data.name;
+					$("#idescriptname").val(activeScript);
+					$("#ideDeleteBtn").show();
+				});
+			}else{
+				if(!confirm("You are editing a file on a remote server. Are you sure you want to save this file?")) return;
+				$("#ideSaveBtn").html('<span class="glyphicon glyphicon-floppy-save"></span> Saving...');
+				$("#ideSaveBtn").prop('disabled', true);
+				$.ajax({
+					url: "./assets/API.php",
+					data: {
+						action: "write_file", 
+						path: iLoveLAMP.modules.ide.preload.filpath,
+						file: iLoveLAMP.modules.ide.preload.file,
+						server: iLoveLAMP.modules.ide.preload.server,
+						contents: editor.getValue()
+					},
+					type: "POST"
+				}).done(function(resp){
+					loadAllScripts(editor);
+					$("#ideSaveBtn").html('<span class="glyphicon glyphicon-floppy-disk"></span> Save');
+					$("#ideSaveBtn").prop('disabled', false).removeProp('disabled');
+				});
+			}
 		});
 		
 		$("#idescriptname").keyup(function(){
@@ -112,10 +162,16 @@ iLoveLAMP.modules.ide = (function(){
 		});
 	}
 	
+	function exit(){
+		iLoveLAMP.modules.ide.preload = false;
+	}
+	
 	return {
 		requiresServer: false,
 		title: "Quick IDE",
 		icon: "file-text-o",
-		init: init
+		init: init,
+		preload: false,
+		exit: exit
 	};
 })();

@@ -15,6 +15,79 @@ checkParams(array("action"));
 
 switch($_REQUEST['action']){
 	
+	case "upload_file":
+		checkParams(array("server", "path"));
+		if(empty($_FILES['uploadFile'])) oops("No file uploaded");
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
+		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
+		$return['response'] = "Attempted to write file";
+		$contents = file_get_contents($_FILES['uploadFile']['tmp_name']);
+		$base64 = base64_encode($contents);
+		
+		$cmd1 = 'echo '.$base64.' >| '.$_REQUEST['path']."/".$_FILES['uploadFile']['name'];
+		$cmd2 = "perl -MMIME::Base64 -ne 'printf \"%s\n\",encode_base64(\$_)' <<< cat ".$_REQUEST['path']."/".$_FILES['uploadFile']['name']." >| ".$_REQUEST['path']."/".$_FILES['uploadFile']['name'];
+		// perl -MMIME::Base64 -ne 'printf "%s\n",decode_base64($_)' | cat /home/robert/Swisher_Sweet-logo-933028C0B7-seeklogo.com.gif >| /home/robert/Swisher_Sweet-logo-933028C0B7-seeklogo.com.gif
+		
+		$return['data'] = array(
+			"output1"=>$ssh->exec($cmd1),
+			"output2"=>$cmd2
+		);
+		output();
+		break;
+	
+	case "write_file":
+		header('X-XSS-Protection: 0');
+		checkParams(array("server", "path", "file", "contents"));
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
+		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
+		$return['response'] = "Attempted to write file";
+		$contents = $_REQUEST['contents'];
+		$return['data'] = $ssh->exec('echo '.escapeshellarg($contents).' >| '.$_REQUEST['path']."/".$_REQUEST['file']);
+		output();
+		break;
+	
+	case "download":
+		checkParams(array("server", "path", "file"));
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
+		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
+		
+		$destPath = sys_get_temp_dir();
+		$fileName = $_REQUEST['file'];
+		$sourcePath = $_REQUEST['path'];
+		$cmd = "cat $sourcePath/$fileName";
+		$raw = $ssh->exec($cmd);
+		
+		$mmcmd = "file -bi $sourcePath/$fileName";
+		$mimetype = trim($ssh->exec($mmcmd));
+		
+		$fscmd = "wc -c < $sourcePath/$fileName";
+		$size = floatval(trim($ssh->exec($fscmd)));
+		
+		$output = empty($_REQUEST['output']) ? "download" : $_REQUEST['output'];
+		if($output === "download"){
+			header("Content-Type: application/octet-stream");
+			header("Content-Transfer-Encoding: Binary");
+			header('Content-Length: ' . $size);
+			header("Content-disposition: attachment; filename=\"".$fileName."\"");
+			echo $raw; exit;
+		}
+		
+		if($output === "show"){
+			header('Content-Type:'.$mimetype);
+			header('Content-Length: ' . $size);
+			echo $raw; exit;
+		}
+		break;
+	
 	case "quickide_get":
 		header('X-XSS-Protection: 0');
 		$data = array();
@@ -212,9 +285,12 @@ switch($_REQUEST['action']){
 	
 	case "get_modules":
 		$mods_dir = realpath(dirname(__FILE__))."/modules";
-		$files = scandir($mods_dir, 1);
-		array_pop($files);
-		array_pop($files);
+		$f = scandir($mods_dir, 1);
+		$files = array();
+		foreach($f as $file){
+			if($file[0] === ".") continue;
+			$files[] = $file;
+		}
 		$return['response'] = "Gathered Modules";
 		$return['data'] = $files;
 		output();
