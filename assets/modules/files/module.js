@@ -41,10 +41,9 @@ iLoveLAMP.modules.files = (function(){
 		});
 		$("#foldersDiv").empty();
 		for(var i=0; i<sortedFiles.length; i++)(function(data){
-			console.log(data);
 			var glyph = data.type == "directory" ? 'glyphicon-folder-open' : 'glyphicon glyphicon-file';
 			var color = data.type == "directory" ? '#10a1c9' : '#14ccff';
-			$thumb = $("<div style='color: "+color+" !important; display:inline-block; margin:.5em; height: 6em; width: 6em; overflow: hidden; text-overflow: ellipsis;'>");
+			$thumb = $("<div class='fsthumb' style='color: "+color+" !important; display:inline-block; margin:.5em; height: 6em; width: 6em; overflow: hidden; text-overflow: ellipsis;'>");
 			$thumb.html("<a href='#' style='text-decoration: none; color: "+color+" !important; text-align: center;'>"+
 				'<span class="fsicon"></span><br>'+
 				data.name+'</a>');
@@ -56,7 +55,7 @@ iLoveLAMP.modules.files = (function(){
 			});
 
 			var filetype = data.type === "directory" ?  "directory" : "ft_other_files";
-			var action = data.type === "directory" ?  false : "download";
+			var action = data.type === "directory" ?  false : "qide";
 			var icon = data.type === "directory" ? '<i class="fa fa-folder-o"></i>' : '<i class="fa fa-file-o"></i>';
 			
 			// if it's not a folder figure out what type of file it is
@@ -90,6 +89,11 @@ iLoveLAMP.modules.files = (function(){
 							break;
 						case "CSS":
 							filetype = "ft_css_files"; 
+							action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "qide";
+							icon = '<i class="fa fa-file-code-o"></i>';
+							break;
+						case "CONF": case "CNF": case "CONFIG":
+							filetype = "ft_conf_files"; 
 							action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "qide";
 							icon = '<i class="fa fa-file-code-o"></i>';
 							break;
@@ -163,7 +167,7 @@ iLoveLAMP.modules.files = (function(){
 			});
 			$thumb.popover({ 
 				delay: { "show": 1000, "hide": 100 },
-				trigger: "hover",
+				trigger: "manual",
 				content: "<center><table class='table table-striped table-bordered table-condensed'><tbody>"+
 					"<tr><th>Perms</th><td>"+data.perms+"</td></tr>"+
 					"<tr><th>Links</th><td>"+data.links+"</td></tr>"+
@@ -175,6 +179,20 @@ iLoveLAMP.modules.files = (function(){
 				placement: "auto",
 				title: data.name,
 				html: true
+			}).on("mouseenter", function () {
+				var _this = this;
+				$(".fsthumb").popover("hide");
+				$(_this).popover("show");
+				$(".popover").on("mouseleave", function () {
+					$(_this).popover('hide');
+				});
+			}).on("mouseleave", function () {
+				var _this = this;
+				setTimeout(function () {
+					if (!$(".popover:hover").length) {
+						$(_this).popover("hide");
+					}
+				}, 300);
 			});
 		})(sortedFiles[i]);
 	
@@ -248,16 +266,40 @@ iLoveLAMP.modules.files = (function(){
 			});
 		});
 		
+		$("#newFilebtn").click(function(e){
+			e.preventDefault();
+			var filename = prompt("Enter a filename to create.");
+			if("" === filename.trim) return;
+			$.ajax({
+				url: "./assets/API.php",
+				data: {
+					action: "write_file",
+					path: cwd,
+					server: iLoveLAMP.currentServer,
+					file: filename,
+					contents: " "
+				}
+			}).done(function(resp){
+				displayFiles();
+				iLoveLAMP.modules.ide.preload = {
+					filpath: cwd,
+					server: iLoveLAMP.currentServer,
+					file: filename
+				};
+				iLoveLAMP.loadPage('ide');
+			});
+		});
+		
 		resetFileUpload();
 	}
 	
+	var hgInterval = false, hgposit=0;
 	function resetFileUpload(){
-		$("#fileUploadGhostDiv").remove();
-		$("<div id='fileUploadGhostDiv' style='display:none;'>").appendTo('body').fileUpload({
+		$("#uploadFilebtn").fileUpload({
 			dragArea: "#foldersDiv", 
 			dragEnterClass: "dragover",
 			change: function(){
-				var upload = $("#fileUploadGhostDiv").fileUpload("getFiles"); 
+				var upload = $("#uploadFilebtn").fileUpload("getFiles"); 
 				while(upload.length > 1) upload.shift();
 				
 				var data = new FormData();

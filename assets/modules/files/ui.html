@@ -10,8 +10,21 @@
 		<div class="panel panel-default">
 			<div class="panel-heading">
 				<div class="row">
-					<div class="col-sm-6">
+					<div class="col-md-6 col-sm-12 col-xs-12">
 						<div class="input-group">
+							
+							<span class="input-group-btn">
+								<button class="btn btn-default" type="button" id="newFolderbtn"><i class="fa fa-folder-open"></i></button>
+							</span>
+							
+							<span class="input-group-btn">
+								<button class="btn btn-default" type="button" id="newFilebtn"><i class="fa fa-file-text"></i></button>
+							</span>
+							
+							<span class="input-group-btn">
+								<button class="btn btn-default" type="button" id="uploadFilebtn"><i class="fa fa-upload"></i></button>
+							</span>
+							
 							<span class="input-group-btn">
 								<button class="btn btn-default" type="button" id="parentDir"><span class='glyphicon glyphicon-chevron-up'></span></button>
 							</span>
@@ -26,7 +39,7 @@
 							</span>
 						</div>
 					</div>
-					<div class="col-sm-6">
+					<div class="col-md-6 hidden-sm hidden-xs">
 						<div class="input-group">
 							<span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
 							<input type="text" class="form-control" placeholder="Search..." id="filesearch">
