@@ -23,18 +23,60 @@ switch($_REQUEST['action']){
 		$config = json_decode($config, true);
 		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
 		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
-		$return['response'] = "Attempted to write file";
+		$return['response'] = "Attempted to write file.";
+		
+		// Validate file upload
+		$message = 'Error uploading file';
+        switch( $_FILES['uploadFile']['error'] ) {
+            case UPLOAD_ERR_OK:
+                $message = false;;
+                break;
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                $message .= ' - file too large. Inrease your upload_max_filesize and post_max_size limits in php.ini.';
+                break;
+            case UPLOAD_ERR_PARTIAL:
+                $message .= ' - file upload was not completed.';
+                break;
+            case UPLOAD_ERR_NO_FILE:
+                $message .= ' - zero-length file uploaded.';
+                break;
+            default:
+                $message .= ' - internal error #'.$_FILES['newfile']['error'];
+                break;
+        }
+		if($message) oops($message);
+		
+		// Base 64 encode file contents
 		$contents = file_get_contents($_FILES['uploadFile']['tmp_name']);
 		$base64 = base64_encode($contents);
+		if(empty($base64)) oops("Error encoding");
 		
-		$cmd1 = 'echo '.$base64.' >| '.$_REQUEST['path']."/".$_FILES['uploadFile']['name'];
-		$cmd2 = "perl -MMIME::Base64 -ne 'printf \"%s\n\",encode_base64(\$_)' <<< cat ".$_REQUEST['path']."/".$_FILES['uploadFile']['name']." >| ".$_REQUEST['path']."/".$_FILES['uploadFile']['name'];
-		// perl -MMIME::Base64 -ne 'printf "%s\n",decode_base64($_)' | cat /home/robert/Swisher_Sweet-logo-933028C0B7-seeklogo.com.gif >| /home/robert/Swisher_Sweet-logo-933028C0B7-seeklogo.com.gif
+		// Create the encoded file on the server in chunks
+		$tempname = time().".tmp";
+		$cmd1 = array();
+		$b64Chunks = strlen($base64) > 5000 ? str_split($base64, 5000) : array($base64);
+		foreach($b64Chunks as $chunk){
+			$c = $ssh->exec('echo "'.$chunk.'" >> '.$_REQUEST['path']."/".$tempname);
+			if(!empty($c)) oops("Error uploading to server: ".$c);
+		}
 		
-		$return['data'] = array(
-			"output1"=>$ssh->exec($cmd1),
-			"output2"=>$cmd2
-		);
+		// Try to decode using perl first
+		$cmd2 = 'perl -MMIME::Base64 -i -0777ne \'print decode_base64($_)\' "'.$_REQUEST['path']."/".$tempname."\"";
+		$c = $ssh->exec($cmd2);
+		if(!empty($c)){
+			// perl didn't work, let's try php
+			$cmd2 = 'php -r "\$b64 = file_get_contents(\''.$_REQUEST['path']."/".$tempname.'\'); file_put_contents(\''.$_REQUEST['path']."/".$tempname.'\', base64_decode(\$b64));"';
+			$c = $ssh->exec($cmd2);
+			if(!empty($c)) oops("Error decoding file. Ensure that either PHP or Perl are installed.");
+		}
+		
+		// Rename the temp file to the original filename
+		$cmd3 = 'mv "'.$_REQUEST['path']."/".$tempname."\" \"".$_REQUEST['path']."/".$_FILES['uploadFile']['name'].'"';
+		$c = $ssh->exec($cmd3);
+		if(!empty($c)) oops("Error renaming temp file after upload.");
+		
+		$return['data'] = $_REQUEST['path']."/".$_FILES['uploadFile']['name'];
 		output();
 		break;
 	

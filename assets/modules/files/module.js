@@ -40,67 +40,79 @@ iLoveLAMP.modules.files = (function(){
 			}
 		});
 		$("#foldersDiv").empty();
-		for(var i=0; i<sortedFiles.length; i++)(function(file){
-			var glyph = file.type == "directory" ? 'glyphicon-folder-open' : 'glyphicon glyphicon-file';
-			var color = file.type == "directory" ? '#10a1c9' : '#14ccff';
+		for(var i=0; i<sortedFiles.length; i++)(function(data){
+			console.log(data);
+			var glyph = data.type == "directory" ? 'glyphicon-folder-open' : 'glyphicon glyphicon-file';
+			var color = data.type == "directory" ? '#10a1c9' : '#14ccff';
 			$thumb = $("<div style='color: "+color+" !important; display:inline-block; margin:.5em; height: 6em; width: 6em; overflow: hidden; text-overflow: ellipsis;'>");
 			$thumb.html("<a href='#' style='text-decoration: none; color: "+color+" !important; text-align: center;'>"+
-				'<span class="glyphicon '+glyph+'" style="font-size:4em;"></span><br>'+
-				file.name+'</a>');
-			$thumb.data("file", file);
+				'<span class="fsicon"></span><br>'+
+				data.name+'</a>');
+			$thumb.data("file", data);
 			$thumb.appendTo("#foldersDiv");
 			$thumb.find("a").click(function(e){
 				e.preventDefault();
 				return false;
 			});
+
+			var filetype = data.type === "directory" ?  "directory" : "ft_other_files";
+			var action = data.type === "directory" ?  false : "download";
+			var icon = data.type === "directory" ? '<i class="fa fa-folder-o"></i>' : '<i class="fa fa-file-o"></i>';
+			
+			// if it's not a folder figure out what type of file it is
+			if(filetype !== "directory"){
+				// if the ilename starts with a dot, it's hidden
+				if(data.name.substr(0, 1) === "."){
+					filetype = "ft_hidden_files";
+					action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "download";
+					icon = '<i class="fa fa-file"></i>';
+				}else{
+					switch(data.name.split(".").pop().toUpperCase()){
+						case "JPG": case "GIF": case "JPEG": case "BMP": case "PNG": case "SVG":
+							filetype = "ft_image_files"; 
+							action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "modal";
+							icon = '<i class="fa fa-file-image-o"></i>';
+							break;
+						case "HTML": case "HTM": case "XHTML":
+							filetype = "ft_html_files"; 
+							action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "qide";
+							icon = '<i class="fa fa-file-code-o"></i>';
+							break;
+						case "PHP":
+							filetype = "ft_php_files"; 
+							action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "qide";
+							icon = '<i class="fa fa-file-code-o"></i>';
+							break;
+						case "JS":
+							filetype = "ft_js_files"; 
+							action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "qide";
+							icon = '<i class="fa fa-file-code-o"></i>';
+							break;
+						case "CSS":
+							filetype = "ft_css_files"; 
+							action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "qide";
+							icon = '<i class="fa fa-file-code-o"></i>';
+							break;
+						case "TXT":
+							filetype = "ft_plaintext_files";
+							action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "qide";
+							icon = '<i class="fa fa-file-text-o"></i>';
+							break;
+						case "PDF":
+							filetype = "ft_pdf_files";
+							action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "modal";
+							icon = '<i class="fa fa-file-pdf-o"></i>';
+							break;
+					}
+				}
+			}
+			
+			$icon = $(icon).css("font-size", "4em");
+			$thumb.find(".fsicon").append($icon);
+			
 			$thumb.find("a").dblclick(function(e){
 				e.preventDefault();
-				var data = $(this).parent().data("file");
 				if(data.type === "directory") return loadDirectory(cwd+"/"+data.name);
-				
-				var filetype = "ft_other_files";
-				
-				// if the ilename starts with a dot, it's hidden
-				if(data.name.substr(0, 1) === ".") filetype = "ft_hidden_files";
-				
-				switch(data.name.split(".").pop().toUpperCase()){
-					case "JPG": case "GIF": case "JPEG": case "BMP": case "PNG": case "SVG":
-						filetype = "ft_image_files"; break;
-					case "HTML": case "HTM": case "XHTML":
-						filetype = "ft_html_files"; break;
-					case "PHP":
-						filetype = "ft_php_files"; break;
-					case "JS":
-						filetype = "ft_js_files"; break;
-					case "CSS":
-						filetype = "ft_css_files"; break;
-					case "TXT":
-						filetype = "ft_plaintext_files"; break;
-					case "PDF":
-						filetype = "ft_pdf_files"; break;
-					default:
-						filetype = "ft_other_files"; break;
-				}
-				
-				var action = "download";
-				switch(filetype){
-					case "ft_hidden_files":
-						action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "download";
-						break;
-					case "ft_image_files":
-					case "ft_pdf_files":
-						action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "modal";
-						break;
-					case "ft_html_files":
-					case "ft_php_files":
-					case "ft_js_files":
-					case "ft_css_files":
-					case "ft_plaintext_files":
-						action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "qide";
-						break;
-					default: action = "download"; break;
-				}
-				
 				switch(action){
 					case "modal":
 						var fileUrl = "./assets/API.php?action=download&server="+encodeURIComponent(iLoveLAMP.currentServer)+"&path="+encodeURIComponent(cwd)+"&file="+encodeURIComponent(data.name)+"&output=show";
@@ -150,17 +162,18 @@ iLoveLAMP.modules.files = (function(){
 
 			});
 			$thumb.popover({ 
+				delay: { "show": 1000, "hide": 100 },
 				trigger: "hover",
 				content: "<center><table class='table table-striped table-bordered table-condensed'><tbody>"+
-					"<tr><th>Perms</th><td>"+file.perms+"</td></tr>"+
-					"<tr><th>Links</th><td>"+file.links+"</td></tr>"+
-					"<tr><th>Owner</th><td>"+file.owner+"</td></tr>"+
-					"<tr><th>Group</th><td>"+file.group+"</td></tr>"+
-					"<tr><th>Size</th><td>"+file.size+"</td></tr>"+
-					"<tr><th>Modified</th><td>"+file.modified+"</td></tr>"+
+					"<tr><th>Perms</th><td>"+data.perms+"</td></tr>"+
+					"<tr><th>Links</th><td>"+data.links+"</td></tr>"+
+					"<tr><th>Owner</th><td>"+data.owner+"</td></tr>"+
+					"<tr><th>Group</th><td>"+data.group+"</td></tr>"+
+					"<tr><th>Size</th><td>"+data.size+"</td></tr>"+
+					"<tr><th>Modified</th><td>"+data.modified+"</td></tr>"+
 					"</tbody></table><b>Double Click to Open</b></center>",
-				placement: "bottom",
-				title: file.name,
+				placement: "auto",
+				title: data.name,
 				html: true
 			});
 		})(sortedFiles[i]);
@@ -262,8 +275,8 @@ iLoveLAMP.modules.files = (function(){
 					processData: false,
 					contentType: false
 				}).done(function(resp){
-					console.log(resp);
-					loadDirectory(cwd);
+					if(!resp.success) alert(resp.response);
+					else loadDirectory(cwd);
 				});
 				
 			}
