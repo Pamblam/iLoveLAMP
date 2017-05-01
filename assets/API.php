@@ -404,7 +404,7 @@ switch($_REQUEST['action']){
 				"LOGS" => $config['LOGS'],
 				"THEME" => $config['THEME'],
 				"DEFAULT" => $config['DEFAULT'],
-				"DATABASES" => $config['DATABASES']
+				"DATABASES" => !empty($config['DATABASES']) ? $config['DATABASES'] : array()
 			);
 		}
 		$return['response'] = "Gathered ".count($data)." servers.";
