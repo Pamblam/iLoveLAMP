@@ -1,11 +1,7 @@
 iLoveLAMP.modules.dashboard = (function(){
 	
 	function init(){
-		$.ajax({
-			url: "./assets/API.php",
-			data: {action: "get_modules"},
-			type: "POST"
-		}).done(function(resp){
+		iLoveLAMP.api("get_modules", {}).then(function(resp){
 			// wait for all modules to load
 			(function wait(done){
 				setTimeout(function(){

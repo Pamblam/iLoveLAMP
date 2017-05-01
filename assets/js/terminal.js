@@ -94,7 +94,6 @@
 				return;
 			}
 			breakSelect = true;
-			console.log("resetting things");
 			if(self.ele.setSelectionRange){
 				var len = $(self.ele).val().length * 2;
 				self.ele.setSelectionRange(len, len);

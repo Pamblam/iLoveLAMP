@@ -1,4 +1,10 @@
-<!DOCTYPE html>
+<?php
+session_start();
+require realpath(dirname(__FILE__))."/assets/userAuth.php";
+if(!function_exists("auth_user")) die("Error: Corrupted userAuth.php. No auth_user function found.");
+if(auth_user() === false) die("Access denied.");
+
+?><!DOCTYPE html>
 <html>
 	<head>
 		<meta charset="utf-8">
@@ -10,6 +16,7 @@
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/styles/default.min.css">
 		<link rel="stylesheet" href="https://cdn.datatables.net/1.10.13/css/dataTables.bootstrap.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/styles/metro/notify-metro.min.css">
 		<link href="assets/codemirror/lib/codemirror.css" rel="stylesheet">
 		<link rel="stylesheet" href="assets/css/terminal.css">
 		<link rel="stylesheet" href="assets/css/AdminLTE.min.css">
@@ -92,6 +99,8 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/languages/javascript.min.js"></script>
 		<script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
 		<script src="https://cdn.datatables.net/1.10.13/js/dataTables.bootstrap.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js"></script>
+		<script src='assets/js/sql-formatter.min.js'></script>
 		<script src='assets/codemirror/lib/codemirror.js'></script>
 		<script src='assets/codemirror/addon/selection/selection-pointer.js'></script>
 		<script src="assets/codemirror/mode/javascript/javascript.js"></script>
@@ -99,6 +108,7 @@
 		<script src="assets/codemirror/mode/clike/clike.js"></script>
 		<script src="assets/codemirror/mode/css/css.js"></script>
 		<script src="assets/codemirror/mode/xml/xml.js"></script>
+		<script src="assets/codemirror/mode/sql/sql.js"></script>
 		<script src="assets/codemirror/mode/vbscript/vbscript.js"></script>
 		<script src="assets/codemirror/mode/htmlmixed/htmlmixed.js"></script>
 		<script src="assets/codemirror/addon/display/autorefresh.js"></script>

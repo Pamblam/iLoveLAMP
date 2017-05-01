@@ -1,13 +1,38 @@
 <div class="row">
 	<div class="col-lg-12">
-		<h2><i class="fa fa-database"></i> Databases</h2>   
+		<h4><i class="fa fa-database"></i> Databases</h4>   
 	</div>
 </div>           
 <hr />
 
 <div class="row pad-top">
+	<div class="col-sm-6">
+		<div class="form-group">
+			<label for="dbdd">Select Database</label>
+			<select class="form-control" id="dbdd"></select>
+		</div>
+	</div>
+	<div class="col-sm-6">
+		<div class="form-group">
+			<label for="tabledispdd">Show</label>
+			<select class="form-control" id="tabledispdd">
+				<option value="_iLLQueryResults_">Query Results</option>
+			</select>
+		</div>
+	</div>
+</div>
+
+<div class="row">
 	<div class="col-lg-12">
-		
-		
+		<textarea id="sqlinput"></textarea><br>
+		<div>
+			<button type="button"  class="btn btn-primary" id="runsqlbtn">
+				<i class="fa fa-database"></i> Run SQL
+			</button>
+			<button type="button"  class="btn btn-primary" id="formatsqlbtn">
+				<i class="fa fa-indent"></i> Format SQL
+			</button>
+		</div><br>
+		<div id="sqlresultstable"></div>
 	</div>
 </div>

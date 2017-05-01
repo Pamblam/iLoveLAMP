@@ -21,14 +21,7 @@ iLoveLAMP.modules.processes = (function(){
 	
 	function getProcesses(cb){
 		if(typeof cb !== "function") return;
-		$.ajax({
-			url: "./assets/API.php",
-			data: {
-				action: "get_processes",
-				server: iLoveLAMP.currentServer
-			},
-			type: "POST"
-		}).done(cb);
+		iLoveLAMP.api("get_processes", {server: iLoveLAMP.currentServer}).then(cb);
 	}
 	
 	function init(){
@@ -89,15 +82,7 @@ iLoveLAMP.modules.processes = (function(){
 			$(".killtask").click(function(){
 				var _this = this;
 				if(confirm("Are you sure you wanna kill this task?")){
-					$.ajax({
-						url: "./assets/API.php",
-						data: {
-							action: "kill_process",
-							server: iLoveLAMP.currentServer,
-							pid: $(this).data("pid")
-						},
-						type: "POST"
-					}).done(function(){
+					iLoveLAMP.api("kill_process", {server: iLoveLAMP.currentServer, pid: $(this).data("pid")}).then(function(){
 						$(_this).parent().parent().remove();
 					});
 				}

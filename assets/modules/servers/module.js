@@ -20,14 +20,7 @@ iLoveLAMP.modules.servers = (function(){
 	
 	function validateAndSave(server){
 		$("html, body").animate({ scrollTop: 0 }, "slow");
-		$.ajax({
-			url: "./assets/API.php",
-			data: {
-				action: "check_server",
-				server: server
-			},
-			type: "POST"
-		}).done(function(resp){
+		iLoveLAMP.api("check_server", {server: server}).then(function(resp){
 			if(resp.success){
 				$("#all_servers_dd").find("option").each(function(){
 					if($(this).val() === server.orig_name) $(this).val(server.new_name);
@@ -56,12 +49,20 @@ iLoveLAMP.modules.servers = (function(){
 				$("#is_default_server").prop("checked", $(this).val() !== "NEW" && resp.data[$(this).val()].DEFAULT);
 				$("#srever_pw").val('');
 				$(".error_log_row").remove();
+				$(".db_row").remove();
 				if($(this).val() !== "NEW"){
 					for(var logName in resp.data[$(this).val()].LOGS){
 						if(!resp.data[$(this).val()].LOGS.hasOwnProperty(logName)) continue;
 						addErrorLogRow();
 						$(".error_log_row").last().find("input").first().val(logName);
 						$(".error_log_row").last().find("input").last().val(resp.data[$(this).val()].LOGS[logName]);
+					}
+					for(var i=0; i<resp.data[$(this).val()].DATABASES.length; i++){
+						addDBRow();
+						$(".db_row").last().find(".dbtype").val(resp.data[$(this).val()].DATABASES[i].type);
+						$(".db_row").last().find(".dbname").val(resp.data[$(this).val()].DATABASES[i].name);
+						$(".db_row").last().find(".dbuser").val(resp.data[$(this).val()].DATABASES[i].user);
+						$(".db_row").last().find(".dbpass").val(resp.data[$(this).val()].DATABASES[i].pass);
 					}
 				}
 			});
@@ -72,6 +73,17 @@ iLoveLAMP.modules.servers = (function(){
 				server.host = $("#srever_host").val();
 				server.user = $("#srever_user").val();
 				server.theme = $("#server_theme").val();
+				
+				server.databases = [];
+				$(".db_row").each(function(){
+					var db = {};
+					db.type = $(this).find(".dbtype").val();
+					db.name = $(this).find(".dbname").val();
+					db.user = $(this).find(".dbuser").val();
+					db.pass = $(this).find(".dbpass").val();
+					server.databases.push(db);
+				});
+				
 				server.logs = {};
 				$(".error_log_row").each(function(){
 					server.logs[$(this).find("input").first().val()] = $(this).find("input").last().val();
@@ -94,10 +106,44 @@ iLoveLAMP.modules.servers = (function(){
 			});
 			
 			$("#add_log_file").click(addErrorLogRow);
+			$("#add_db").click(addDBRow);
 			
 		});
 		
-		$(document).on('click', '.removeLog', closeLog);
+		$(document).on('click', '.removeLog', removeRow);
+		$(document).on('click', '.removeDB', removeRow);
+	}
+	
+	function addDBRow(){
+		$('<div class="row db_row" style="margin-bottom: 1em"><div class="col-md-3">'+
+				'<div class="form-group">'+
+					'<label>Type:</label>'+
+					'<select class="form-control dbtype">'+
+						'<option value=mysql>MySQL</option>'+
+						'<option value=oracle>Oracle</option>'+
+					'</select>'+
+				'</div>'+
+			'</div><div class="col-md-3">'+
+				'<div class="form-group">'+
+					'<label>DB Name:</label>'+
+					'<input type="text" class="form-control dbname" value="">'+
+				'</div>'+
+			'</div><div class="col-md-3">'+
+				'<div class="form-group">'+
+					'<label>User:</label>'+
+					'<input type="text" class="form-control dbuser">'+
+				'</div>'+
+			'</div><div class="col-md-3">'+
+				'<div class="form-group">'+
+					'<label>Password:</label>'+
+					'<div class="input-group">'+
+						'<input type="text" class="form-control dbpass">'+
+						'<span class="input-group-btn">'+
+						'<button class="btn btn-danger removeDB" type="button"> <i class="fa fa-minus-square"></i> </button></span>'+
+						'</div>'+
+					'</div>'+
+				'</div>'+
+			'</div></div>').insertBefore("#add_db");
 	}
 	
 	function addErrorLogRow(){
@@ -110,12 +156,15 @@ iLoveLAMP.modules.servers = (function(){
 			'</div></div></div>').insertBefore("#add_log_file");
 	}
 	
-	function closeLog(){
-		$(this).parent().parent().parent().parent().remove();
+	function removeRow(){
+		$row = $(this);
+		while(!$row.hasClass("row")) $row = $row.parent();
+		$row.remove();
 	}
 		
 	function exit(){
-		$(document).off('click', '.removeLog', closeLog);
+		$(document).off('click', '.removeLog', removeRow);
+		$(document).off('click', '.removeDB', removeRow);
 	}
 		
 	return {

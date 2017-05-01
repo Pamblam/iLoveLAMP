@@ -36,15 +36,7 @@ iLoveLAMP.modules.logs = (function(){
 	}
 	
 	function loadLog(logName){
-		$.ajax({
-			url: "./assets/API.php",
-			data: {
-				action: "get_logs",
-				server: iLoveLAMP.currentServer,
-				log: logName
-			},
-			type: "POST"
-		}).done(function(resp){
+		iLoveLAMP.api("get_logs", {server: iLoveLAMP.currentServer, log: logName}).then(function(resp){
 			rawLogs = resp.data;
 			filterAndDisplay();
 		});

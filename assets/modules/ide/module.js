@@ -7,10 +7,7 @@ iLoveLAMP.modules.ide = (function(){
 	var newScript = '<html>\n\t<head>\n\t\t<title>QuickFiddle (<'+'?php echo basename(__FILE__); ?>)</title>\n\t\t<style>\n\t\t\tbody{ margin:2em 10%; }\n\t\t</style>\n\t</head>\n\t<body>\n\t\t<div id="myDiv">Loading...</div>\n\t\t<script src="//code.jquery.com/jquery-2.2.4.min.js"></scri'+'pt>\n\t\t<script>\n\t\t\t$(function(){\n\t\t\t\t$("#myDiv").html("<b>Hello, world!</b>");\n\t\t\t});\n\t\t</sc'+'ript>\n\t</body>\n</html>';
 	
 	function loadAllScripts(editor){
-		$.ajax({
-			url: "./assets/API.php",
-			data: {action: "quickide_get"}
-		}).done(function(data){
+		iLoveLAMP.api("quickide_get", {}).then(function(data){
 			$(".scriptswell").empty();
 			for(var i=data.data.length; i--;){
 				$(".scriptswell").append("<button type=button class='btn btn-info btn-xs' data-index='"+i+"'><span class='glyphicon glyphicon-bookmark'></span> "+data.data[i].name+"</button>&nbsp;");
@@ -42,16 +39,12 @@ iLoveLAMP.modules.ide = (function(){
 		if(false === preload) editor.getDoc().setValue(newScript);
 		else{
 			// Get file contents
-			$.ajax({
-				url: "./assets/API.php", 
-				data: {
-					action: "download", 
-					path: iLoveLAMP.modules.ide.preload.filpath,
-					file: iLoveLAMP.modules.ide.preload.file,
-					server: iLoveLAMP.modules.ide.preload.server,
-					output: "show"
-				}
-			}).done(function(data){
+			iLoveLAMP.api("download", {
+				path: iLoveLAMP.modules.ide.preload.filpath,
+				file: iLoveLAMP.modules.ide.preload.file,
+				server: iLoveLAMP.modules.ide.preload.server,
+				output: "show"
+			}).then(function(data){
 				iLoveLAMP.modules.ide.preload.code = data;
 				editor.getDoc().setValue(data);
 				$("#idescriptname").val(iLoveLAMP.modules.ide.preload.file);
@@ -70,11 +63,7 @@ iLoveLAMP.modules.ide = (function(){
 				return;
 			}
 			editor.getDoc().setValue(newScript);
-			$.ajax({
-				url: "./assets/API.php",
-				data: {action: "quickide_delete", name: activeScript},
-				type: "POST"
-			}).done(function(resp){
+			iLoveLAMP.api("quickide_delete", {name: activeScript}).then(function(resp){
 				loadAllScripts(editor);
 				activeScript = false;
 				$("#idescriptname").val('');
@@ -122,11 +111,7 @@ iLoveLAMP.modules.ide = (function(){
 				var name = $("#idescriptname").val();
 				$("#ideSaveBtn").html('<span class="glyphicon glyphicon-floppy-save"></span> Saving...');
 				$("#ideSaveBtn").prop('disabled', true);
-				$.ajax({
-					url: "./assets/API.php",
-					data: {action: "quickide_save", code: editor.getValue(),  name: name},
-					type: "POST"
-				}).done(function(resp){
+				iLoveLAMP.api("quickide_save", {code: editor.getValue(),  name: name}).then(function(resp){
 					loadAllScripts(editor);
 					$("#ideSaveBtn").html('<span class="glyphicon glyphicon-floppy-disk"></span> Save');
 					$("#ideSaveBtn").prop('disabled', false).removeProp('disabled');
@@ -138,17 +123,12 @@ iLoveLAMP.modules.ide = (function(){
 				if(!confirm("You are editing a file on a remote server. Are you sure you want to save this file?")) return;
 				$("#ideSaveBtn").html('<span class="glyphicon glyphicon-floppy-save"></span> Saving...');
 				$("#ideSaveBtn").prop('disabled', true);
-				$.ajax({
-					url: "./assets/API.php",
-					data: {
-						action: "write_file", 
-						path: iLoveLAMP.modules.ide.preload.filpath,
-						file: iLoveLAMP.modules.ide.preload.file,
-						server: iLoveLAMP.modules.ide.preload.server,
-						contents: editor.getValue()
-					},
-					type: "POST"
-				}).done(function(resp){
+				iLoveLAMP.api("write_file", {
+					path: iLoveLAMP.modules.ide.preload.filpath,
+					file: iLoveLAMP.modules.ide.preload.file,
+					server: iLoveLAMP.modules.ide.preload.server,
+					contents: editor.getValue()
+				}).then(function(resp){
 					loadAllScripts(editor);
 					$("#ideSaveBtn").html('<span class="glyphicon glyphicon-floppy-disk"></span> Save');
 					$("#ideSaveBtn").prop('disabled', false).removeProp('disabled');

@@ -62,13 +62,52 @@ var iLoveLAMP = (function ($) {
 		
 		modules: {},
 		
+		notify: function(msg, cls){
+			$.notify(msg, {
+				globalPosition: "bottom right",
+				className: cls,
+				autoHide: false
+			});
+			var $notify = $('.notifyjs-corner').children().first();
+			return {
+				close: function(){
+					$notify.trigger('notify-hide');
+				},
+				get: function(){
+					return $notify;
+				}
+			}
+		},
+		
+		api: function(action, data, isUpload){
+			return new Promise(function(done){
+				var notification = iLoveLAMP.notify("Waiting for server to do: "+action+"  ", "info");
+				notification.get().find("[data-notify-text]").append("<img src='https://www.thingiverse.com/img/ajax-loader.gif'>");
+				data.action = action;
+				var params = {
+					url: "./assets/API.php",
+					data: data,
+					type: "POST"
+				};
+				if(true === isUpload){
+					params.cache = false;
+					params.processData = false;
+					params.contentType = false;
+				}
+				$.ajax(params).done(function(resp){
+					notification.close();
+					if(resp.hasOwnProperty("success") && !resp.success){
+						var n = iLoveLAMP.notify(resp.mssage, "error");
+						setTimeout(function(){ n.close(); }, 3000);
+					}
+					done(resp);
+				});
+			});
+		},
+		
 		changeSettings:function(settings, cb){
 			if("function" !== typeof cb) cb = function(){};
-			$.ajax({
-				url: "./assets/API.php",
-				data: {action: "set_settings", settings: settings},
-				type: "POST"
-			}).done(cb);
+			iLoveLAMP.api("set_settings", {settings: settings}).then(cb);
 		},
 		
 		setServer: function(serverName){
@@ -86,11 +125,7 @@ var iLoveLAMP = (function ($) {
 			forceReset = forceReset || false;
 			if("function" !== typeof cb) cb = function(){};
 			if(false!== iLoveLAMP.illSettings  && !forceReset) return cb(iLoveLAMP.illSettings);
-			$.ajax({
-				url: "./assets/API.php",
-				data: {action: "get_settings"},
-				type: "POST"
-			}).done(function(resp){
+			iLoveLAMP.api("get_settings", {}).then(function(resp){
 				iLoveLAMP.illSettings = resp.data;
 				if(!resp.data.theme) iLoveLAMP.illSettings.theme = "skin-red-light";
 				iLoveLAMP.setTheme(iLoveLAMP.illSettings.theme);
@@ -127,11 +162,7 @@ var iLoveLAMP = (function ($) {
 			forceReset = forceReset || false;
 			if("function" !== typeof cb) cb = function(){};
 			if(AllServers.data !== undefined && !forceReset) return cb(AllServers);
-			$.ajax({
-				url: "./assets/API.php",
-				data: {action: "get_servers"},
-				type: "POST"
-			}).done(function(resp){
+			iLoveLAMP.api("get_servers", {}).then(function(resp){
 				AllServers = resp;
 				cb(resp);
 			});
@@ -158,11 +189,7 @@ var iLoveLAMP = (function ($) {
         },
 		
 		loadModules: function(done){
-			$.ajax({
-				url: "./assets/API.php",
-				data: {action: "get_modules"},
-				type: "POST"
-			}).done(function(resp){
+			iLoveLAMP.api("get_modules", {}).then(function(resp){
 				var counter = 0;
 				for(var n=resp.data.length; n--;)(function(i){
 					counter++;
@@ -224,8 +251,42 @@ var iLoveLAMP = (function ($) {
 			});
 		},
 		
+		Modal: function(title, html, buttons){
+			if(!Array.isArray(buttons)) buttons = [];
+			var mid = "modal"+Math.floor(Math.random() * 10000000000000001);
+			var footer = "";
+			if(buttons.length){
+				footer = '<div class="modal-footer">';
+				for( var i = 0 ; i < buttons.length ; i++ ){
+					var icon = buttons[i].icon ? buttons[i].icon : "";
+					var btnclass = buttons[i].btnclass ? buttons[i].btnclass : "btn-default";
+					footer += "<button type=button class='btn "+btnclass+"'>"+icon+" "+buttons[i].title+" </button>";
+				}
+				footer += '</div>';
+			}
+			var html = '<div class="modal fade" id="'+mid+'" tabindex="-1"'+
+				'role="dialog" aria-labelledby="myModalLabel" aria-hidden='+
+				'"true"><div class="modal-dialog"><div class="modal-conten'+
+				't"><div class="modal-header"><h4 class="modal-t'+
+				'itle" id="myModalLabel">'+title+'</h4></div><div class="modal'+
+				'-body">'+html+'</div>'+footer+'</d'+
+				'iv></div></div>';
+			$('body').append(html); 
+			$("#"+mid).find(".modal-footer").find("button").each(function(i){
+				$(this).click(function(){
+					buttons[i].action.call($("#"+mid)[0]);
+				});
+			});
+			$("#"+mid).modal('show');
+			return mid;
+		},
+		
 		BSAlert: function(text, cb){
 			if("function" !== typeof cb) cb=function(){};
+			$("#"+mid).find('.ok').click(function(){
+				$("#"+mid).modal('hide');
+				setTimeout(function(){ $("#"+mid).remove(); ok();}, 1000);
+			});
 			var mid = "modal"+Math.floor(Math.random() * 10000000000000001);
 			var html = '<div class="modal fade" id="'+mid+'" tabindex="-1"'+
 				'role="dialog" aria-labelledby="myModalLabel" aria-hidden='+
@@ -245,6 +306,6 @@ var iLoveLAMP = (function ($) {
 			$("#"+mid).modal('show');
 		}
 	
-    }
+    };
 	
 }(jQuery));

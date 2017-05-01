@@ -72,11 +72,7 @@ iLoveLAMP.modules.settings = (function(){
 		updateInterval = setInterval(function(){
 			if(pendingresp) return;
 			pendingresp = true;
-			$.ajax({
-				url: "./assets/API.php",
-				data: {action: "do_update"},
-				type: "POST"
-			}).done(function(resp){
+			iLoveLAMP.api("do_update", {}).then(function(resp){
 				pendingresp = false;
 				if(resp.data.completed_pct === 100){
 					clearInterval(updateInterval);
@@ -91,11 +87,7 @@ iLoveLAMP.modules.settings = (function(){
 	}
 	
 	function isUpdating(cb){
-		$.ajax({
-			url: "./assets/API.php",
-			data: {action: "is_updating"},
-			type: "POST"
-		}).done(function(u){
+		iLoveLAMP.api("is_updating", {}).then(function(u){
 			cb(u.resp)
 		});
 	}

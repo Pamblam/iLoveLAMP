@@ -7,11 +7,7 @@ iLoveLAMP.modules.files = (function(){
 	var sortType = "type";
 	
 	function terminal(cmd, cb){
-		$.ajax({
-			url: "./assets/API.php",
-			data: {action: "terminal", server: iLoveLAMP.currentServer, cmd: cmd},
-			type: "POST"
-		}).done(function(resp){
+		iLoveLAMP.api("terminal", {server: iLoveLAMP.currentServer, cmd: cmd}).then(function(resp){
 			cb(resp.data);
 		});
 	}
@@ -49,10 +45,6 @@ iLoveLAMP.modules.files = (function(){
 				data.name+'</a>');
 			$thumb.data("file", data);
 			$thumb.appendTo("#foldersDiv");
-			$thumb.find("a").click(function(e){
-				e.preventDefault();
-				return false;
-			});
 
 			var filetype = data.type === "directory" ?  "directory" : "ft_other_files";
 			var action = data.type === "directory" ?  false : "qide";
@@ -114,93 +106,183 @@ iLoveLAMP.modules.files = (function(){
 			$icon = $(icon).css("font-size", "4em");
 			$thumb.find(".fsicon").append($icon);
 			
-			$thumb.find("a").dblclick(function(e){
+			$thumb.find("a").click(function(e){
 				e.preventDefault();
-				if(data.type === "directory") return loadDirectory(cwd+"/"+data.name);
-				switch(action){
-					case "modal":
-						var fileUrl = "./assets/API.php?action=download&server="+encodeURIComponent(iLoveLAMP.currentServer)+"&path="+encodeURIComponent(cwd)+"&file="+encodeURIComponent(data.name)+"&output=show";
-						if(filetype === "ft_image_files") markup = "<b>Preview for: "+data.name+"</b><br><br><center><img src='"+fileUrl+"' style=max-width:100%;></center>";
-						else markup = "<b>Preview for: "+data.name+"</b><br><br><iframe src='"+fileUrl+"' style='width:100%; border:0;'></iframe>";
-						iLoveLAMP.BSAlert(markup);
-						break;
-					case "qide":
-						iLoveLAMP.modules.ide.preload = {
-							filpath: cwd,
-							server: iLoveLAMP.currentServer,
-							file: data.name
-						};
-						iLoveLAMP.loadPage('ide');
-						break;
-					case "new_tab":
-						$form = $("<form action=./assets/API.php method=POST target=_blank>");
-						$form.append("<input type=hidden name=action value=download />");
-						$server = $("<input type=hidden name=server />");
-						$server.val(iLoveLAMP.currentServer);
-						$form.append($server);
-						$path = $("<input type=hidden name=path />");
-						$path.val(cwd);
-						$form.append($path);
-						$file = $("<input type=hidden name=file />");
-						$file.val(data.name);
-						$form.append($file);
-						$form.append("<input type=hidden name=output value=show />");
-						$form.appendTo('body').submit().remove();
-						break;
-					case "download":
-					default:
-						$form = $("<form action=./assets/API.php method=POST>");
-						$form.append("<input type=hidden name=action value=download />");
-						$server = $("<input type=hidden name=server />");
-						$server.val(iLoveLAMP.currentServer);
-						$form.append($server);
-						$path = $("<input type=hidden name=path />");
-						$path.val(cwd);
-						$form.append($path);
-						$file = $("<input type=hidden name=file />");
-						$file.val(data.name);
-						$form.append($file);
-						$form.appendTo('body').submit().remove();
-						break;
+				var title = "<small>"+cwd+"/</small><br><big><b>"+icon+" "+data.name;
+				if(data.type == "directory") title += "/";
+				title += "</b></big>";
+				var buttons = [{
+					title: "Open",
+					btnclass: "btn-primary",
+					icon: "<span class='glyphicon glyphicon-ok-sign'></span>",
+					action: function(){
+						$(this).modal('hide');
+						var _this = this;
+						setTimeout(function(){ $(_this).remove();}, 1000);
+						openFile(data, action, filetype);
+					}
+				},{
+					title: "Cancel",
+					btnclass: "btn-default",
+					icon: "<span class='glyphicon glyphicon-arrow-left'></span>",
+					action: function(){
+						$(this).modal('hide');
+						var _this = this;
+						setTimeout(function(){ $(_this).remove();}, 1000);
+					}
+				}];
+				if(data.type != "directory"){
+					if(["ft_image_files", "ft_pdf_files"].indexOf(filetype) > -1 && action !== "modal"){
+						buttons.push({
+							title: "Open in Modal",
+							btnclass: "btn-info",
+							icon: "<span class='glyphicon glyphicon-modal-window'></span>",
+							action: function(){
+								$(this).modal('hide');
+								var _this = this;
+								setTimeout(function(){ $(_this).remove(); }, 1000);
+								openFile(data, "modal", filetype);
+							}
+						});
+					}
+					if(["ft_image_files", "ft_pdf_files"].indexOf(filetype) > -1 && action !== "new_tab"){
+						buttons.push({
+							title: "Open in Tab",
+							btnclass: "btn-info",
+							icon: "<span class='glyphicon glyphicon-share'></span>",
+							action: function(){
+								openFile(data, "new_tab", filetype);
+							}
+						});
+					}
+					if(action !== "download"){
+						buttons.push({
+							title: "Download",
+							btnclass: "btn-info",
+							icon: "<span class='glyphicon glyphicon-download'></span>",
+							action: function(){
+								$(this).modal('hide');
+								var _this = this;
+								setTimeout(function(){ $(_this).remove(); }, 1000);
+								openFile(data, "download", filetype);
+							}
+						});
+					}
+					if(action !== "qide"){
+						buttons.push({
+							title: "Edit Raw",
+							btnclass: "btn-info",
+							icon: "<span class='glyphicon glyphicon-edit'></span>",
+							action: function(){
+								$(this).modal('hide');
+								var _this = this;
+								setTimeout(function(){ $(_this).remove(); }, 1000);
+								openFile(data, "qide", filetype);
+							}
+						});
+					}
 				}
-
-			});
-			$thumb.popover({ 
-				delay: { "show": 1000, "hide": 100 },
-				trigger: "manual",
-				content: "<center><table class='table table-striped table-bordered table-condensed'><tbody>"+
+				buttons.push({
+					title: "Delete",
+					btnclass: "btn-danger",
+					icon: "<span class='glyphicon glyphicon-warning-sign'></span>",
+					action: function(){
+						var _this = this;
+						if(filetype == "directory" && confirm("Warning: This will delete all files in this directry! Are you sure you want to delete this?")){
+							terminal("rm -rf \""+cwd+"/"+data.name+"\"", function(){
+								$(_this).modal('hide');
+								setTimeout(function(){ 
+									$(_this).remove(); 
+									loadDirectory(cwd);
+								}, 1000);
+							});
+						}else if(filetype != "directory" && confirm("Warning: This will delete this file! Are you sure you want to delete this?")){
+							terminal("rm \""+cwd+"/"+data.name+"\"", function(){
+								$(_this).modal('hide');
+								setTimeout(function(){ 
+									$(_this).remove();  
+									loadDirectory(cwd);
+								}, 1000);
+							});
+						}else{
+							$(this).modal('hide');
+							setTimeout(function(){ $(_this).remove(); }, 1000);
+						}
+					}
+				});
+				buttons.reverse();
+				var mid = iLoveLAMP.Modal(
+					title, 
+					"<center><table class='table table-striped table-bordered table-condensed'><tbody>"+
 					"<tr><th>Perms</th><td>"+data.perms+"</td></tr>"+
 					"<tr><th>Links</th><td>"+data.links+"</td></tr>"+
 					"<tr><th>Owner</th><td>"+data.owner+"</td></tr>"+
 					"<tr><th>Group</th><td>"+data.group+"</td></tr>"+
 					"<tr><th>Size</th><td>"+data.size+"</td></tr>"+
 					"<tr><th>Modified</th><td>"+data.modified+"</td></tr>"+
-					"</tbody></table><b>Double Click to Open</b></center>",
-				placement: "auto",
-				title: data.name,
-				html: true
-			}).on("mouseenter", function () {
-				var _this = this;
-				$(".fsthumb").popover("hide");
-				$(_this).popover("show");
-				$(".popover").on("mouseleave", function () {
-					$(_this).popover('hide');
-				});
-			}).on("mouseleave", function () {
-				var _this = this;
-				setTimeout(function () {
-					if (!$(".popover:hover").length) {
-						$(_this).popover("hide");
-					}
-				}, 300);
+					"</tbody></table><div class='actionbar'></div></center>",
+					buttons
+				);
+				return false;
 			});
+			
 		})(sortedFiles[i]);
 	
 	}
 	
+	function openFile(data, action, filetype){
+		if(data.type === "directory") return loadDirectory(cwd+"/"+data.name);
+		switch(action){
+			case "modal":
+				var fileUrl = "./assets/API.php?action=download&server="+encodeURIComponent(iLoveLAMP.currentServer)+"&path="+encodeURIComponent(cwd)+"&file="+encodeURIComponent(data.name)+"&output=show";
+				if(filetype === "ft_image_files") markup = "<b>Preview for: "+data.name+"</b><br><br><center><img src='"+fileUrl+"' style=max-width:100%;></center>";
+				else markup = "<b>Preview for: "+data.name+"</b><br><br><iframe src='"+fileUrl+"' style='width:100%; border:0;'></iframe>";
+				iLoveLAMP.BSAlert(markup);
+				break;
+			case "qide":
+				iLoveLAMP.modules.ide.preload = {
+					filpath: cwd,
+					server: iLoveLAMP.currentServer,
+					file: data.name
+				};
+				iLoveLAMP.loadPage('ide');
+				break;
+			case "new_tab":
+				$form = $("<form action=./assets/API.php method=POST target=_blank>");
+				$form.append("<input type=hidden name=action value=download />");
+				$server = $("<input type=hidden name=server />");
+				$server.val(iLoveLAMP.currentServer);
+				$form.append($server);
+				$path = $("<input type=hidden name=path />");
+				$path.val(cwd);
+				$form.append($path);
+				$file = $("<input type=hidden name=file />");
+				$file.val(data.name);
+				$form.append($file);
+				$form.append("<input type=hidden name=output value=show />");
+				$form.appendTo('body').submit().remove();
+				break;
+			case "download":
+			default:
+				$form = $("<form action=./assets/API.php method=POST>");
+				$form.append("<input type=hidden name=action value=download />");
+				$server = $("<input type=hidden name=server />");
+				$server.val(iLoveLAMP.currentServer);
+				$form.append($server);
+				$path = $("<input type=hidden name=path />");
+				$path.val(cwd);
+				$form.append($path);
+				$file = $("<input type=hidden name=file />");
+				$file.val(data.name);
+				$form.append($file);
+				$form.appendTo('body').submit().remove();
+				break;
+		}
+	}
+	
 	function loadDirectory(directory){
 		directory = directory.trim();
-		terminal("cd "+directory+"; ls -lap", function(resp){
+		terminal("cd \""+directory+"\"; ls -lap", function(resp){
 			$("#filesearch").val('');
 			$("#cwd").val(directory);
 			cwd = directory;
@@ -238,6 +320,15 @@ iLoveLAMP.modules.files = (function(){
 		$("#foldersDiv").html("<b>Loading...</b>");
 		terminal("pwd", loadDirectory);
 		
+		$('#newFolderbtn').click(function(e){
+			e.preventDefault();
+			var newFolderName = prompt("Enter a name for the new folder.");
+			if(!newFolderName || "" == newFolderName.trim()) return;
+			terminal("mkdir \""+cwd+"/"+newFolderName.trim()+"\"", function(){
+				displayFiles(cwd);
+			});
+		});
+		
 		$('a[data-sortby]').click(function(e){
 			e.preventDefault();
 			sortType = $(this).data("sortby");
@@ -269,17 +360,13 @@ iLoveLAMP.modules.files = (function(){
 		$("#newFilebtn").click(function(e){
 			e.preventDefault();
 			var filename = prompt("Enter a filename to create.");
-			if("" === filename.trim) return;
-			$.ajax({
-				url: "./assets/API.php",
-				data: {
-					action: "write_file",
-					path: cwd,
-					server: iLoveLAMP.currentServer,
-					file: filename,
-					contents: " "
-				}
-			}).done(function(resp){
+			if(!filename || "" === filename.trim()) return;
+			iLoveLAMP.api("write_file", {
+				path: cwd,
+				server: iLoveLAMP.currentServer,
+				file: filename,
+				contents: " "
+			}).then(function(resp){
 				displayFiles();
 				iLoveLAMP.modules.ide.preload = {
 					filpath: cwd,
@@ -304,22 +391,13 @@ iLoveLAMP.modules.files = (function(){
 				
 				var data = new FormData();
 				data.append("uploadFile", upload[0]);
-				data.append("action", "upload_file");
 				data.append("path", cwd);
 				data.append("server", iLoveLAMP.currentServer);
 				data.append("contents", iLoveLAMP.currentServer);
-				
-				$.ajax({
-					url: "./assets/API.php",
-					data: data,
-					type: "POST",
-					cache: false,
-					processData: false,
-					contentType: false
-				}).done(function(resp){
+				iLoveLAMP.api("upload_file", data).then(function(resp){
 					if(!resp.success) alert(resp.response);
 					else loadDirectory(cwd);
-				});
+				}, true);
 				
 			}
 		});

@@ -10,10 +10,62 @@ $return = array(
 	"data" => array()
 );
 
+require realpath(dirname(__FILE__))."/userAuth.php";
+if(!function_exists("auth_user")) oops("Error: Corrupted userAuth.php. No auth_user function found.");
+if(auth_user() === false) oops("Access denied.");
+
 // Make sure an action parameter has been sent to this endpoint
 checkParams(array("action"));
 
 switch($_REQUEST['action']){
+	
+	case "sql_query":
+		checkParams(array("server", "db", "query"));
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
+		$config = file_get_contents("config.json");
+		$config = json_decode($config, true);
+		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
+		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
+		$database = $_REQUEST['db'];
+		switch($database['type']){
+			case "mysql":
+				$resp = $ssh->read();
+				$ssh->write('mysql -u '.$database['user'].' -p '.$database['name']."\n");
+				$ssh->read("Enter password: ");
+				$ssh->write($database['pass']."\n");
+				$resp .= $ssh->read();
+				if(strpos($resp, "mysql>") === false) oops("Could not login to MySQL. $resp");
+				$query = trim($_REQUEST['query'], " ;\n\r\t");
+				$ssh->write($query.";\n");
+				$resp = $ssh->read();
+				$data = array();
+				if(strpos($resp, "-+\r\n") !== false){
+					$lines = explode("-+\r\n", $resp);
+					array_shift($lines); // pop the first one off
+					$headersRow = explode("|", array_shift($lines));
+					array_pop($headersRow); array_shift($headersRow);
+					$headers = array();
+					foreach($headersRow as $header) $headers[] = trim($header);
+					$rawLines = explode("|\r\n", $lines[0]);
+					array_pop($rawLines); // pop the last one off
+					foreach($rawLines as $rawLine){
+						$columns = explode("|", $rawLine);
+						array_shift($columns); // pop the first one off
+						$row = array();
+						foreach($columns as $k=>$rawColumn) $row[$headers[$k]] = trim($rawColumn);
+						$data[] = $row;
+					}
+				}
+				$return['response'] = "Ran statement.";
+				$return['data'] = $data;
+				output();
+				break;
+			case "oracle":
+
+				break;
+			default: oops("Unrecognised DBMS type.");
+		}
+		break;
 	
 	case "upload_file":
 		checkParams(array("server", "path"));
@@ -90,7 +142,7 @@ switch($_REQUEST['action']){
 		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
 		$return['response'] = "Attempted to write file";
 		$contents = $_REQUEST['contents'];
-		$return['data'] = $ssh->exec('echo '.escapeshellarg($contents).' >| '.$_REQUEST['path']."/".$_REQUEST['file']);
+		$return['data'] = $ssh->exec('echo '.escapeshellarg($contents).' >| '.escapeshellarg($_REQUEST['path']."/".$_REQUEST['file']));
 		output();
 		break;
 	
@@ -105,13 +157,15 @@ switch($_REQUEST['action']){
 		$destPath = sys_get_temp_dir();
 		$fileName = $_REQUEST['file'];
 		$sourcePath = $_REQUEST['path'];
-		$cmd = "cat $sourcePath/$fileName";
+		
+		$fullFileName= '"'.$sourcePath."/".$fileName.'"';
+		$cmd = "cat $fullFileName";
 		$raw = $ssh->exec($cmd);
 		
-		$mmcmd = "file -bi $sourcePath/$fileName";
+		$mmcmd = "file -bi $fullFileName";
 		$mimetype = trim($ssh->exec($mmcmd));
 		
-		$fscmd = "wc -c < $sourcePath/$fileName";
+		$fscmd = "wc -c < $fullFileName";
 		$size = floatval(trim($ssh->exec($fscmd)));
 		
 		$output = empty($_REQUEST['output']) ? "download" : $_REQUEST['output'];
@@ -349,7 +403,8 @@ switch($_REQUEST['action']){
 				"HOST" => $config['HOST'],
 				"LOGS" => $config['LOGS'],
 				"THEME" => $config['THEME'],
-				"DEFAULT" => $config['DEFAULT']
+				"DEFAULT" => $config['DEFAULT'],
+				"DATABASES" => $config['DATABASES']
 			);
 		}
 		$return['response'] = "Gathered ".count($data)." servers.";
@@ -405,7 +460,6 @@ switch($_REQUEST['action']){
 		$servers = json_decode($servers, true);
 		$pass = empty($_REQUEST['server']['pass']) ? false : $_REQUEST['server']['pass'];
 		if(empty($pass))
-			
 			foreach($servers['servers'] as $name=>$config)
 				if($name === $_REQUEST['server']['orig_name'])
 					$pass = $config['PASS'];
@@ -425,6 +479,25 @@ switch($_REQUEST['action']){
 			}
 		}
 		
+		// Validate and add each database
+		if(!empty($_REQUEST['server']['databases'])){
+			foreach($_REQUEST['server']['databases'] as $database){
+				switch($database['type']){
+					case "mysql":
+						$resp = $ssh->read();
+						$ssh->write('mysql -u '.$database['user'].' -p '.$database['name']."\n");
+						$ssh->write($database['pass']."\n");
+						$resp .= $ssh->read();
+						if(strpos($resp, "mysql>") === false) oops("Could not login to MySQL.");
+						break;
+					case "oracle":
+						
+						break;
+					default: oops("Unrecognised DBMS type.");
+				}
+			}
+		}
+		
 		// if it's default, remove other default
 		if(!empty($_REQUEST['server']['default']))
 			foreach($servers['servers'] as $k=>$v)
@@ -438,7 +511,8 @@ switch($_REQUEST['action']){
 				"HOST"=> $_REQUEST['server']['host'],
 				"LOGS"=> isset($_REQUEST['server']['logs']) ? $_REQUEST['server']['logs'] : array(),
 				"THEME"=> $_REQUEST['server']['theme'],
-				"DEFAULT"=> !empty($_REQUEST['server']['default'])
+				"DEFAULT"=> !empty($_REQUEST['server']['default']),
+				"DATABASES"=>empty($_REQUEST['server']['databases']) ? array() : $_REQUEST['server']['databases']
 			);
 		}else{
 			$servers['servers'][$_REQUEST['server']['new_name']] = array(
@@ -447,7 +521,8 @@ switch($_REQUEST['action']){
 				"HOST"=> $_REQUEST['server']['host'],
 				"LOGS"=> isset($_REQUEST['server']['logs']) ? $_REQUEST['server']['logs'] : array(),
 				"THEME"=> $_REQUEST['server']['theme'],
-				"DEFAULT"=> !empty($_REQUEST['server']['default'])
+				"DEFAULT"=> !empty($_REQUEST['server']['default']),
+				"DATABASES"=>empty($_REQUEST['server']['databases']) ? array() : $_REQUEST['server']['databases']
 			);
 			unset($servers['servers'][$_REQUEST['server']['orig_name']]);
 		}

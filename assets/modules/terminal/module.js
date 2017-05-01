@@ -14,11 +14,7 @@ iLoveLAMP.modules.terminal = (function(){
 				io: function(input, output, done){
 					if(persistCommands.length) input = persistCommands.join("; ")+"; "+input;
 					if(persisttNext) persistCommands.push(input);
-					$.ajax({
-						url: "./assets/API.php",
-						data: {action: "terminal", server: iLoveLAMP.currentServer, cmd: input},
-						type: "POST"
-					}).done(function(resp){
+					iLoveLAMP.api("terminal", {server: iLoveLAMP.currentServer, cmd: input}).then(function(resp){
 						persisttNext = false;
 						$("#persistcmdbtn").removeClass("btn-success").addClass("btn-primary").html('<span class="glyphicon glyphicon-flag"></span> Persist Next Command');
 						output(resp.data);
