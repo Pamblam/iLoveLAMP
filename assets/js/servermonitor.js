@@ -63,6 +63,7 @@ var iLoveLAMP = (function ($) {
 		modules: {},
 		
 		notify: function(msg, cls){
+			if(undefined === cls) cls = 'info';
 			$.notify(msg, {
 				globalPosition: "bottom right",
 				className: cls,
@@ -83,21 +84,22 @@ var iLoveLAMP = (function ($) {
 			return new Promise(function(done){
 				var notification = iLoveLAMP.notify("Waiting for server to do: "+action+"  ", "info");
 				notification.get().find("[data-notify-text]").append("<img src='https://www.thingiverse.com/img/ajax-loader.gif'>");
-				data.action = action;
-				var params = {
-					url: "./assets/API.php",
-					data: data,
-					type: "POST"
-				};
+				var params = {};
 				if(true === isUpload){
 					params.cache = false;
 					params.processData = false;
 					params.contentType = false;
+					data.append("action", action);
+				}else{
+					data.action = action;
 				}
+				params.url = "./assets/API.php";
+				params.data = data;
+				params.type = "POST";
 				$.ajax(params).done(function(resp){
 					notification.close();
 					if(resp.hasOwnProperty("success") && !resp.success){
-						var n = iLoveLAMP.notify(resp.mssage, "error");
+						var n = iLoveLAMP.notify(resp.response, "error"); 
 						setTimeout(function(){ n.close(); }, 3000);
 					}
 					done(resp);

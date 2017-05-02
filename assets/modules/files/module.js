@@ -380,7 +380,6 @@ iLoveLAMP.modules.files = (function(){
 		resetFileUpload();
 	}
 	
-	var hgInterval = false, hgposit=0;
 	function resetFileUpload(){
 		$("#uploadFilebtn").fileUpload({
 			dragArea: "#foldersDiv", 
@@ -394,10 +393,9 @@ iLoveLAMP.modules.files = (function(){
 				data.append("path", cwd);
 				data.append("server", iLoveLAMP.currentServer);
 				data.append("contents", iLoveLAMP.currentServer);
-				iLoveLAMP.api("upload_file", data).then(function(resp){
-					if(!resp.success) alert(resp.response);
-					else loadDirectory(cwd);
-				}, true);
+				iLoveLAMP.api("upload_file", data, true).then(function(resp){
+					if(resp.success) loadDirectory(cwd);
+				});
 				
 			}
 		});
