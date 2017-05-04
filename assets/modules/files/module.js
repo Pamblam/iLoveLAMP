@@ -106,128 +106,144 @@ iLoveLAMP.modules.files = (function(){
 			$icon = $(icon).css("font-size", "4em");
 			$thumb.find(".fsicon").append($icon);
 			
+			var DELAY = 700, clicks = 0, timer = null;
 			$thumb.find("a").click(function(e){
 				e.preventDefault();
-				var title = "<small>"+cwd+"/</small><br><big><b>"+icon+" "+data.name;
-				if(data.type == "directory") title += "/";
-				title += "</b></big>";
-				var buttons = [{
-					title: "Open",
-					btnclass: "btn-primary",
-					icon: "<span class='glyphicon glyphicon-ok-sign'></span>",
-					action: function(){
-						$(this).modal('hide');
-						var _this = this;
-						setTimeout(function(){ $(_this).remove();}, 1000);
-						openFile(data, action, filetype);
-					}
-				},{
-					title: "Cancel",
-					btnclass: "btn-default",
-					icon: "<span class='glyphicon glyphicon-arrow-left'></span>",
-					action: function(){
-						$(this).modal('hide');
-						var _this = this;
-						setTimeout(function(){ $(_this).remove();}, 1000);
-					}
-				}];
-				if(data.type != "directory"){
-					if(["ft_image_files", "ft_pdf_files"].indexOf(filetype) > -1 && action !== "modal"){
-						buttons.push({
-							title: "Open in Modal",
-							btnclass: "btn-info",
-							icon: "<span class='glyphicon glyphicon-modal-window'></span>",
+				clicks++;  //count clicks
+				if (clicks === 1) {
+					timer = setTimeout(function () {
+						// single click
+						var title = "<small>"+cwd+"/</small><br><big><b>"+icon+" "+data.name;
+						if(data.type == "directory") title += "/";
+						title += "</b></big>";
+						var buttons = [{
+							title: "Open",
+							btnclass: "btn-primary",
+							icon: "<span class='glyphicon glyphicon-ok-sign'></span>",
 							action: function(){
 								$(this).modal('hide');
 								var _this = this;
-								setTimeout(function(){ $(_this).remove(); }, 1000);
-								openFile(data, "modal", filetype);
+								setTimeout(function(){ $(_this).remove();}, 1000);
+								openFile(data, action, filetype);
 							}
-						});
-					}
-					if(["ft_image_files", "ft_pdf_files"].indexOf(filetype) > -1 && action !== "new_tab"){
-						buttons.push({
-							title: "Open in Tab",
-							btnclass: "btn-info",
-							icon: "<span class='glyphicon glyphicon-share'></span>",
-							action: function(){
-								openFile(data, "new_tab", filetype);
-							}
-						});
-					}
-					if(action !== "download"){
-						buttons.push({
-							title: "Download",
-							btnclass: "btn-info",
-							icon: "<span class='glyphicon glyphicon-download'></span>",
+						},{
+							title: "Cancel",
+							btnclass: "btn-default",
+							icon: "<span class='glyphicon glyphicon-arrow-left'></span>",
 							action: function(){
 								$(this).modal('hide');
 								var _this = this;
-								setTimeout(function(){ $(_this).remove(); }, 1000);
-								openFile(data, "download", filetype);
+								setTimeout(function(){ $(_this).remove();}, 1000);
 							}
-						});
-					}
-					if(action !== "qide"){
-						buttons.push({
-							title: "Edit Raw",
-							btnclass: "btn-info",
-							icon: "<span class='glyphicon glyphicon-edit'></span>",
-							action: function(){
-								$(this).modal('hide');
-								var _this = this;
-								setTimeout(function(){ $(_this).remove(); }, 1000);
-								openFile(data, "qide", filetype);
+						}];
+						if(data.type != "directory"){
+							if(["ft_image_files", "ft_pdf_files"].indexOf(filetype) > -1 && action !== "modal"){
+								buttons.push({
+									title: "Open in Modal",
+									btnclass: "btn-info",
+									icon: "<span class='glyphicon glyphicon-modal-window'></span>",
+									action: function(){
+										$(this).modal('hide');
+										var _this = this;
+										setTimeout(function(){ $(_this).remove(); }, 1000);
+										openFile(data, "modal", filetype);
+									}
+								});
 							}
-						});
-					}
-				}
-				buttons.push({
-					title: "Delete",
-					btnclass: "btn-danger",
-					icon: "<span class='glyphicon glyphicon-warning-sign'></span>",
-					action: function(){
-						var _this = this;
-						if(filetype == "directory" && confirm("Warning: This will delete all files in this directry! Are you sure you want to delete this?")){
-							terminal("rm -rf \""+cwd+"/"+data.name+"\"", function(){
-								jSQL.query("DELETE FROM files_mod WHERE dir = '"+cwd+"' AND server = ?").execute([iLoveLAMP.currentServer]);
-								jSQL.commit();
-								$(_this).modal('hide');
-								setTimeout(function(){ 
-									$(_this).remove(); 
-									loadDirectory(cwd);
-								}, 1000);
-							});
-						}else if(filetype != "directory" && confirm("Warning: This will delete this file! Are you sure you want to delete this?")){
-							terminal("rm \""+cwd+"/"+data.name+"\"", function(){
-								jSQL.query("DELETE FROM files_mod WHERE dir = '"+cwd+"' AND server = ?").execute([iLoveLAMP.currentServer]);
-								jSQL.commit();
-								$(_this).modal('hide');
-								setTimeout(function(){ 
-									$(_this).remove();  
-									loadDirectory(cwd);
-								}, 1000);
-							});
-						}else{
-							$(this).modal('hide');
-							setTimeout(function(){ $(_this).remove(); }, 1000);
+							if(["ft_image_files", "ft_pdf_files"].indexOf(filetype) > -1 && action !== "new_tab"){
+								buttons.push({
+									title: "Open in Tab",
+									btnclass: "btn-info",
+									icon: "<span class='glyphicon glyphicon-share'></span>",
+									action: function(){
+										openFile(data, "new_tab", filetype);
+									}
+								});
+							}
+							if(action !== "download"){
+								buttons.push({
+									title: "Download",
+									btnclass: "btn-info",
+									icon: "<span class='glyphicon glyphicon-download'></span>",
+									action: function(){
+										$(this).modal('hide');
+										var _this = this;
+										setTimeout(function(){ $(_this).remove(); }, 1000);
+										openFile(data, "download", filetype);
+									}
+								});
+							}
+							if(action !== "qide"){
+								buttons.push({
+									title: "Edit Raw",
+									btnclass: "btn-info",
+									icon: "<span class='glyphicon glyphicon-edit'></span>",
+									action: function(){
+										$(this).modal('hide');
+										var _this = this;
+										setTimeout(function(){ $(_this).remove(); }, 1000);
+										openFile(data, "qide", filetype);
+									}
+								});
+							}
 						}
-					}
-				});
-				buttons.reverse();
-				var mid = iLoveLAMP.Modal(
-					title, 
-					"<center><table class='table table-striped table-bordered table-condensed'><tbody>"+
-					"<tr><th>Perms</th><td>"+data.perms+"</td></tr>"+
-					"<tr><th>Links</th><td>"+data.links+"</td></tr>"+
-					"<tr><th>Owner</th><td>"+data.owner+"</td></tr>"+
-					"<tr><th>Group</th><td>"+data.group+"</td></tr>"+
-					"<tr><th>Size</th><td>"+data.size+"</td></tr>"+
-					"<tr><th>Modified</th><td>"+data.modified+"</td></tr>"+
-					"</tbody></table><div class='actionbar'></div></center>",
-					buttons
-				);
+						buttons.push({
+							title: "Delete",
+							btnclass: "btn-danger",
+							icon: "<span class='glyphicon glyphicon-warning-sign'></span>",
+							action: function(){
+								var _this = this;
+								if(filetype == "directory" && confirm("Warning: This will delete all files in this directry! Are you sure you want to delete this?")){
+									terminal("rm -rf \""+cwd+"/"+data.name+"\"", function(){
+										jSQL.query("DELETE FROM files_mod WHERE dir = '"+cwd+"' AND server = ?").execute([iLoveLAMP.currentServer]);
+										jSQL.commit();
+										$(_this).modal('hide');
+										setTimeout(function(){ 
+											$(_this).remove(); 
+											loadDirectory(cwd);
+										}, 1000);
+									});
+								}else if(filetype != "directory" && confirm("Warning: This will delete this file! Are you sure you want to delete this?")){
+									terminal("rm \""+cwd+"/"+data.name+"\"", function(){
+										jSQL.query("DELETE FROM files_mod WHERE dir = '"+cwd+"' AND server = ?").execute([iLoveLAMP.currentServer]);
+										jSQL.commit();
+										$(_this).modal('hide');
+										setTimeout(function(){ 
+											$(_this).remove();  
+											loadDirectory(cwd);
+										}, 1000);
+									});
+								}else{
+									$(this).modal('hide');
+									setTimeout(function(){ $(_this).remove(); }, 1000);
+								}
+							}
+						});
+						buttons.reverse();
+						var mid = iLoveLAMP.Modal(
+							title, 
+							"<center><table class='table table-striped table-bordered table-condensed'><tbody>"+
+							"<tr><th>Perms</th><td>"+data.perms+"</td></tr>"+
+							"<tr><th>Links</th><td>"+data.links+"</td></tr>"+
+							"<tr><th>Owner</th><td>"+data.owner+"</td></tr>"+
+							"<tr><th>Group</th><td>"+data.group+"</td></tr>"+
+							"<tr><th>Size</th><td>"+data.size+"</td></tr>"+
+							"<tr><th>Modified</th><td>"+data.modified+"</td></tr>"+
+							"</tbody></table><div class='actionbar'></div></center>",
+							buttons
+						);
+						clicks = 0;
+					}, DELAY);
+				} else {
+					clearTimeout(timer); 
+					// double click
+					openFile(data, action, filetype);
+					clicks = 0; 
+				}
+				
 				return false;
+			}).dblclick(function(e){
+				e.preventDefault(); 
 			});
 			
 		})(sortedFiles[i]);
