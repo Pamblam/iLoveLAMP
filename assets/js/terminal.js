@@ -70,7 +70,7 @@
 				self.commandHistory.unshift(lastLine);
 				self.commandHistoryIndex = 0;
 				params.io(lastLine, function(out){
-					self.ele.value += "\n > "+out;
+					self.ele.value += "\n"+out;
 				}, function(){
 					self.ele.value += "\n"+self.intro;
 					self.busy = false;

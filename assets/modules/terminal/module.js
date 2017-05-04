@@ -17,7 +17,7 @@ iLoveLAMP.modules.terminal = (function(){
 					iLoveLAMP.api("terminal", {server: iLoveLAMP.currentServer, cmd: input}).then(function(resp){
 						persisttNext = false;
 						$("#persistcmdbtn").removeClass("btn-success").addClass("btn-primary").html('<span class="glyphicon glyphicon-flag"></span> Persist Next Command');
-						output(resp.data);
+						output(resp.data.trim());
 						done();
 					});
 				}
