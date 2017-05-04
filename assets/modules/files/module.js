@@ -14,7 +14,7 @@ iLoveLAMP.modules.files = (function(){
 	
 	function displayFiles(){
 		sortedFiles = files;
-		var term = $("#filesearch").val().trim().toUpperCase();
+		var term = ($("#filesearch").val() || "").trim().toUpperCase();
 		if(term !== ""){
 			sortedFiles = sortedFiles.filter(function(file){
 				var f = file.name.toUpperCase();
@@ -190,6 +190,8 @@ iLoveLAMP.modules.files = (function(){
 						var _this = this;
 						if(filetype == "directory" && confirm("Warning: This will delete all files in this directry! Are you sure you want to delete this?")){
 							terminal("rm -rf \""+cwd+"/"+data.name+"\"", function(){
+								jSQL.query("DELETE FROM files_mod WHERE dir = '"+cwd+"' AND server = ?").execute([iLoveLAMP.currentServer]);
+								jSQL.commit();
 								$(_this).modal('hide');
 								setTimeout(function(){ 
 									$(_this).remove(); 
@@ -198,6 +200,8 @@ iLoveLAMP.modules.files = (function(){
 							});
 						}else if(filetype != "directory" && confirm("Warning: This will delete this file! Are you sure you want to delete this?")){
 							terminal("rm \""+cwd+"/"+data.name+"\"", function(){
+								jSQL.query("DELETE FROM files_mod WHERE dir = '"+cwd+"' AND server = ?").execute([iLoveLAMP.currentServer]);
+								jSQL.commit();
 								$(_this).modal('hide');
 								setTimeout(function(){ 
 									$(_this).remove();  
@@ -280,9 +284,24 @@ iLoveLAMP.modules.files = (function(){
 		}
 	}
 	
+	function getDirectory(directory, cb){
+		var dir = jSQL.query("SELECT files FROM files_mod WHERE dir = '"+directory+"' AND server = ?").execute([iLoveLAMP.currentServer]).fetch();
+		if(undefined !== dir.files) return cb(dir.files);
+		terminal("cd \""+directory+"\"; ls -lap", function(resp){
+			if(iLoveLAMP.illSettings.use_cookies){
+				jSQL.query("INSERT INTO files_mod (server, dir, files) values (?, ?, ?)")
+					.execute([iLoveLAMP.currentServer, directory, resp]);
+				jSQL.query("UPDATE files_mod_locs SET current = ? WHERE server = ?")
+					.execute([directory, iLoveLAMP.currentServer]);
+				jSQL.commit();
+			}
+			cb(resp);
+		});
+	}
+	
 	function loadDirectory(directory){
 		directory = directory.trim();
-		terminal("cd \""+directory+"\"; ls -lap", function(resp){
+		getDirectory(directory, function(resp){
 			$("#filesearch").val('');
 			$("#cwd").val(directory);
 			cwd = directory;
@@ -313,19 +332,51 @@ iLoveLAMP.modules.files = (function(){
 		});
 	}
 	
+	function getCurrentDir(cb){
+		var locs = jSQL.query("SELECT * FROM files_mod_locs WHERE server = ?").execute([iLoveLAMP.currentServer]).fetch();
+		if(undefined !== locs.current && locs.current !== "") return cb(locs.current);
+		if(undefined !== locs.home) return cb(locs.home);
+		terminal("pwd", function(wd){
+			jSQL.query("INSERT INTO files_mod_locs (server, home, current) VALUES (?, ?, ?)")
+				.execute([iLoveLAMP.currentServer, wd, ""]);
+			jSQL.commit();
+			loadDirectory(wd);
+		});
+	}
+	
 	function init(){
+		jSQL.query("CREATE TABLE IF NOT EXISTS files_mod (server, dir, files)").execute();
+		jSQL.query("CREATE TABLE IF NOT EXISTS files_mod_locs (server, home, current)").execute();
+		jSQL.commit();
 		cwd = false;
 		files = [];
 		sortType = "type";
 		$("#foldersDiv").html("<b>Loading...</b>");
-		terminal("pwd", loadDirectory);
+		getCurrentDir(loadDirectory);
+		
+		$("#refreshCWD").click(function(e){
+			e.preventDefault();
+			if(!cwd) return;
+			jSQL.query("DELETE FROM files_mod WHERE dir = '"+cwd+"' AND server = ?").execute([iLoveLAMP.currentServer]);
+			jSQL.commit();
+			loadDirectory(cwd);
+		});
+		
+		$("#goHomeBtnFiles").click(function(e){
+			e.preventDefault();
+			var locs = jSQL.query("SELECT home FROM files_mod_locs WHERE server = ?").execute([iLoveLAMP.currentServer]).fetch();
+			if(locs.home !== undefined) return loadDirectory(locs.home);
+			getCurrentDir(loadDirectory);
+		});
 		
 		$('#newFolderbtn').click(function(e){
 			e.preventDefault();
 			var newFolderName = prompt("Enter a name for the new folder.");
 			if(!newFolderName || "" == newFolderName.trim()) return;
 			terminal("mkdir \""+cwd+"/"+newFolderName.trim()+"\"", function(){
-				displayFiles(cwd);
+				jSQL.query("DELETE FROM files_mod WHERE dir = '"+cwd+"' AND server = ?").execute([iLoveLAMP.currentServer]);
+				jSQL.commit();
+				loadDirectory(cwd);
 			});
 		});
 		
@@ -367,7 +418,9 @@ iLoveLAMP.modules.files = (function(){
 				file: filename,
 				contents: " "
 			}).then(function(resp){
-				displayFiles();
+				jSQL.query("DELETE FROM files_mod WHERE dir = '"+cwd+"' AND server = ?").execute([iLoveLAMP.currentServer]);
+				jSQL.commit();
+				loadDirectory(cwd);
 				iLoveLAMP.modules.ide.preload = {
 					filpath: cwd,
 					server: iLoveLAMP.currentServer,
@@ -394,7 +447,11 @@ iLoveLAMP.modules.files = (function(){
 				data.append("server", iLoveLAMP.currentServer);
 				data.append("contents", iLoveLAMP.currentServer);
 				iLoveLAMP.api("upload_file", data, true).then(function(resp){
-					if(resp.success) loadDirectory(cwd);
+					if(resp.success){
+						jSQL.query("DELETE FROM files_mod WHERE dir = '"+cwd+"' AND server = ?").execute([iLoveLAMP.currentServer]);
+						jSQL.commit();
+						loadDirectory(cwd);
+					}
 				});
 				
 			}

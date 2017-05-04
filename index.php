@@ -119,6 +119,7 @@ if(auth_user() === false) die("Access denied.");
 		<script src="assets/js/textChange.js"></script>
 		<script src="assets/js/theme.js"></script>
 		<script src="assets/js/fileUpload.js"></script>
-		<script src="assets/js/servermonitor.js"></script>
+		<script src="assets/js/jSQL.js"></script>
+		<script src="assets/js/iLoveLAMP.js"></script>
 	</body>
 </html>

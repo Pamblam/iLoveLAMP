@@ -5,8 +5,15 @@
 		<div class="panel panel-default">
 			<div class="panel-heading">
 				<div class="row">
-					<div class="col-md-6 col-sm-12 col-xs-12">
+					<div class="col-md-8 col-lg-6 col-sm-12 col-xs-12">
 						<div class="input-group">
+							<span class="input-group-btn">
+								<button class="btn btn-default" type="button" id="goHomeBtnFiles"><i class="fa fa-home"></i></button>
+							</span>
+							
+							<span class="input-group-btn">
+								<button class="btn btn-default" type="button" id="refreshCWD"><i class="fa fa-refresh"></i></button>
+							</span>
 							
 							<span class="input-group-btn">
 								<button class="btn btn-default" type="button" id="newFolderbtn"><i class="fa fa-folder-open"></i></button>
@@ -25,7 +32,7 @@
 							</span>
 							<input type="text" class="form-control" id="cwd" value='/' placeholder="path">
 							<span class="input-group-btn">
-								<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-sort"></span> Sort By <span class="caret"></span></button>
+								<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-sort"></span><span class="caret"></span></button>
 								<ul class="dropdown-menu">
 								  <li><a href="#" data-sortby="name">Name</a></li>
 								  <li><a href="#" data-sortby="size">Size</a></li>
@@ -34,7 +41,7 @@
 							</span>
 						</div>
 					</div>
-					<div class="col-md-6 hidden-sm hidden-xs">
+					<div class="col-md-4 col-lg-6 hidden-sm hidden-xs">
 						<div class="input-group">
 							<span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
 							<input type="text" class="form-control" placeholder="Search..." id="filesearch">

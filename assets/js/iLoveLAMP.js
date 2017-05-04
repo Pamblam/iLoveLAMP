@@ -8,7 +8,6 @@ var iLoveLAMP = (function ($) {
 		return false;
 	});
 	
-
     $(document).ready(function () {
 		iLoveLAMP.setUp(function(){
 			iLoveLAMP.loadModules(function(){
@@ -53,6 +52,33 @@ var iLoveLAMP = (function ($) {
 	
 	var AllServers = {};
 	var currentTheme = false;
+	var loadingNewPage = false;
+	var hash = "";
+	setInterval(function () {
+		if (location.hash != hash && location.hash !== "" && location.hash !== loadingNewPage) {
+			var page = window.location.hash.substr(1);
+			if(iLoveLAMP.modules[page] === undefined) return;
+			hash = window.location.hash;
+			loadingNewPage = hash;
+			iLoveLAMP.getServers(function(resp){
+				if((iLoveLAMP.modules[page].requiresServer !== undefined && iLoveLAMP.modules[page].requiresServer && !iLoveLAMP.currentServer) || Object.keys(AllServers).length < 1) 
+					return iLoveLAMP.showErrorPage("This module requires a server. Choose one by clicking the Servers icon in the top right, or add one in the 'Servers' module.");
+				if(iLoveLAMP.currentModule !== false && iLoveLAMP.modules[iLoveLAMP.currentModule].exit) iLoveLAMP.modules[iLoveLAMP.currentModule].exit()
+				iLoveLAMP.currentModule = page;
+				$(".active").removeClass("active");
+				$("#page-inner").html("<center style='margin:1em;'><img src='./assets/imgs/loader.gif' /></center>");
+				$("#page-inner").load("./assets/modules/"+page+"/ui.html", function(){
+					if(iLoveLAMP.modules[page].init) iLoveLAMP.modules[page].init();
+				});
+				$(".change_mod").each(function(){
+					if($(this).data('mod') === page){
+						$(this).addClass('active');
+					}
+				});
+				setTimeout(function(){ loadingNewPage = false; }, 150);
+			});
+		}
+	}, 100);
 	
     return {
 
@@ -77,7 +103,7 @@ var iLoveLAMP = (function ($) {
 				get: function(){
 					return $notify;
 				}
-			}
+			};
 		},
 		
 		api: function(action, data, isUpload){
@@ -114,6 +140,11 @@ var iLoveLAMP = (function ($) {
 		
 		setServer: function(serverName){
 			if(iLoveLAMP.illSettings.use_cookies) createCookie("currentServer", serverName, 365);
+			for(var mod in iLoveLAMP.modules){
+				if(!iLoveLAMP.modules.hasOwnProperty(mod)) continue;
+				if("function" === typeof iLoveLAMP.modules[mod].onServerChange) 
+					iLoveLAMP.modules[mod].onServerChange();
+			}
 			iLoveLAMP.currentServer = serverName;
 			var theme = AllServers.data[serverName].THEME;
 			if(theme === "DEFAULT") theme = iLoveLAMP.illSettings.theme;
@@ -171,23 +202,7 @@ var iLoveLAMP = (function ($) {
 		},
 		
         loadPage: function (page) {
-			iLoveLAMP.getServers(function(resp){
-				if((iLoveLAMP.modules[page].requiresServer && iLoveLAMP.modules[page].requiresServer && !iLoveLAMP.currentServer) || Object.keys(AllServers).length < 1) 
-					return iLoveLAMP.showErrorPage("This module requires a server. Choose one by clicking the Servers icon in the top right, or add one in the 'Servers' module.");
-				if(iLoveLAMP.currentModule !== false && iLoveLAMP.modules[iLoveLAMP.currentModule].exit) iLoveLAMP.modules[iLoveLAMP.currentModule].exit()
-				iLoveLAMP.currentModule = page;
-				window.location.hash = '#'+page;
-				$(".active").removeClass("active");
-				$("#page-inner").html("<center style='margin:1em;'><img src='./assets/imgs/loader.gif' /></center>");
-				$("#page-inner").load("./assets/modules/"+page+"/ui.html", function(){
-					if(iLoveLAMP.modules[page].init) iLoveLAMP.modules[page].init();
-				});
-				$(".change_mod").each(function(){
-					if($(this).data('mod') === page){
-						$(this).addClass('active');
-					}
-				});
-			});
+			window.location.hash = '#'+page;
         },
 		
 		loadModules: function(done){

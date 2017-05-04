@@ -41,23 +41,40 @@ iLoveLAMP.modules.databases = (function(){
 	
 	function loadDB(db){
 		activeDB = db;
-		runQuery("show tables", function(res){
+		var tables = [];
+		
+		(function(cb){
+			var t = jSQL.query("SELECT * FROM db_tables WHERE server = ?").execute([iLoveLAMP.currentServer]).fetchAll();
+			for(var i=0; i<t.length; i++) tables.push(t[i].table);
+			if(!tables.length) runQuery("show tables", function(res){
+				for(var i=0; i<res.length; i++){
+					for(var col in res[i]){
+						if(!res[i].hasOwnProperty(col)) continue;
+						tables.push(res[i][col]);
+						jSQL.query("INSERT INTO db_tables (server, table) values (?, ?)").execute([iLoveLAMP.currentServer, res[i][col]]);
+						break;
+					}
+				}
+				jSQL.persist();
+				cb();
+			});
+			else cb();
+		})(function(){
 			$("#tabledispdd").empty();
 			$("#tabledispdd").append("<option value='_iLLQueryResults_'>Query Results</option>");
-			for(var i=0; i<res.length; i++){
-				for(var col in res[i]){
-					if(!res[i].hasOwnProperty(col)) continue;
-					$opt = $("<option>");
-					$opt.val(res[i][col]);
-					$opt.html(res[i][col]);
-					$("#tabledispdd").append($opt);
-					break;
-				}
+			for(var i=0; i<tables.length; i++){
+				$opt = $("<option>");
+				$opt.val(tables[i]);
+				$opt.html(tables[i]);
+				$("#tabledispdd").append($opt);
 			}
 		});
+		
 	}
 	
 	function init(){
+		jSQL.query("CREATE TABLE IF NOT EXISTS db_tables (server, table)").execute();
+		jSQL.commit();
 		iLoveLAMP.getServers(function(resp){
 			var server = resp.data[iLoveLAMP.currentServer];
 			if(!server.DATABASES || !server.DATABASES.length) return iLoveLAMP.showErrorPage("There are no databases listed for this server. Add a database in the Manage Servers module.");

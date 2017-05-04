@@ -21,11 +21,7 @@ switch($_REQUEST['action']){
 	
 	case "sql_query":
 		checkParams(array("server", "db", "query"));
-		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
-		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
-		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
+		$ssh = getSSH($_REQUEST['server']);
 		$database = $_REQUEST['db'];
 		switch($database['type']){
 			case "mysql":
@@ -70,11 +66,7 @@ switch($_REQUEST['action']){
 	case "upload_file":
 		checkParams(array("server", "path"));
 		if(empty($_FILES['uploadFile'])) oops("No file uploaded");
-		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
-		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
-		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
+		$ssh = getSSH($_REQUEST['server']);
 		$return['response'] = "Attempted to write file.";
 		
 		// Validate file upload
@@ -135,11 +127,7 @@ switch($_REQUEST['action']){
 	case "write_file":
 		header('X-XSS-Protection: 0');
 		checkParams(array("server", "path", "file", "contents"));
-		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
-		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
-		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
+		$ssh = getSSH($_REQUEST['server']);
 		$return['response'] = "Attempted to write file";
 		$contents = $_REQUEST['contents'];
 		$return['data'] = $ssh->exec('echo '.escapeshellarg($contents).' >| '.escapeshellarg($_REQUEST['path']."/".$_REQUEST['file']));
@@ -148,11 +136,7 @@ switch($_REQUEST['action']){
 	
 	case "download":
 		checkParams(array("server", "path", "file"));
-		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
-		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
-		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
+		$ssh = getSSH($_REQUEST['server']);
 		
 		$destPath = sys_get_temp_dir();
 		$fileName = $_REQUEST['file'];
@@ -297,8 +281,7 @@ switch($_REQUEST['action']){
 	
 	case "dlshell":
 		checkParams(array("server"));
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
+		$config = getConfig();
 		$script = '#!/usr/bin/expect -f'."\n".
 			'spawn ssh '.$config['servers'][$_REQUEST['server']]['USER'].'@'.$config['servers'][$_REQUEST['server']]['HOST']."\n".
 			'expect "assword:"'."\n".
@@ -312,11 +295,7 @@ switch($_REQUEST['action']){
 	
 	case "terminal":
 		checkParams(array("server", "cmd"));
-		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
-		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_REQUEST['server']]['HOST']);
-		if (!$ssh->login($config['servers'][$_REQUEST['server']]['USER'], $config['servers'][$_REQUEST['server']]['PASS'])) oops('Login Failed');
+		$ssh = getSSH($_REQUEST['server']);
 		$raw = $ssh->exec("{$_REQUEST['cmd']}");
 		$return['response'] = "Ran command";
 		$return['data'] = $raw;
@@ -324,8 +303,7 @@ switch($_REQUEST['action']){
 		break;
 	
 	case "do_update";
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
+		$config = getConfig();
 		if(isset($config['ill_updating'])){
 			$return['response'] = $config['ill_updating']['response'];
 			$return['data'] = $config['ill_updating']['data'];
@@ -344,8 +322,7 @@ switch($_REQUEST['action']){
 		break;
 	
 	case "is_updating":
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
+		$config = getConfig();
 		$return['response'] = (isset($config['ill_updating']) ? "C" : "Not c")."urrently updating iLL.";
 		$return['data'] = isset($config['ill_updating']);
 		output();
@@ -354,11 +331,7 @@ switch($_REQUEST['action']){
 	case "get_processes":
 		require realpath(dirname(__FILE__))."/classes/pman.php";
 		checkParams(array("server"));
-		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
-		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_POST['server']]['HOST']);
-		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oops('Login Failed');
+		$ssh = getSSH($_POST['server']);
 		$pman = new pMan($ssh);
 		$return['data'] = $pman->plist();
 		$return['response'] = "Gathered processes.";
@@ -368,11 +341,7 @@ switch($_REQUEST['action']){
 	case "kill_process":
 		require realpath(dirname(__FILE__))."/classes/pman.php";
 		checkParams(array("server", "pid"));
-		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
-		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_POST['server']]['HOST']);
-		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oops('Login Failed');
+		$ssh = getSSH($_POST['server']);
 		$raw = $ssh->exec("kill -9 {$_POST['pid']}");
 		$return['data'] = $raw;
 		$return['response'] = "Killed process {$_POST['pid']}.";
@@ -393,8 +362,7 @@ switch($_REQUEST['action']){
 		break;
 	
 	case "get_servers":
-		$servers = file_get_contents("config.json");
-		$servers = json_decode($servers, true);
+		$servers = getConfig();
 		$data = array();
 		foreach($servers['servers'] as $name=>$config){
 			$data[$name] = array(
@@ -414,12 +382,8 @@ switch($_REQUEST['action']){
 	
 	case "get_logs":
 		checkParams(array("server", "log"));
-		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
-		
-		$ssh = new \phpseclib\Net\SSH2($config['servers'][$_POST['server']]['HOST']);
-		if (!$ssh->login($config['servers'][$_POST['server']]['USER'], $config['servers'][$_POST['server']]['PASS'])) oops('Login Failed');
+		$config = getConfig();
+		$ssh = getSSH($_POST['server']);
 		$raw = $ssh->exec("tail -n 100 {$config['servers'][$_POST['server']]['LOGS'][$_POST['log']]}");
 		$return['response'] = "Gatheered logs.";
 		$return['data'] = $raw;
@@ -427,9 +391,7 @@ switch($_REQUEST['action']){
 		break;
 	
 	case "get_settings":
-		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
+		$config = getConfig();
 		unset($config['servers']);
 		$return['response'] = "Gathered settings.";
 		$return['data'] = $config;
@@ -437,9 +399,7 @@ switch($_REQUEST['action']){
 		break;
 	
 	case "set_settings":
-		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-		$config = file_get_contents("config.json");
-		$config = json_decode($config, true);
+		$config = getConfig();
 		foreach($_REQUEST['settings'] as $setting=>$val){
 			if($setting === "use_cookies") $val = $val === "true";
 			$config[$setting] = $val;
@@ -455,21 +415,14 @@ switch($_REQUEST['action']){
 		break;
 		
 	case "check_server":
-		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
-		$servers = file_get_contents("config.json");
-		$servers = json_decode($servers, true);
+		$servers = getConfig();
 		$pass = empty($_REQUEST['server']['pass']) ? false : $_REQUEST['server']['pass'];
 		if(empty($pass))
 			foreach($servers['servers'] as $name=>$config)
 				if($name === $_REQUEST['server']['orig_name'])
 					$pass = $config['PASS'];
-		try{
-			$ssh = new \phpseclib\Net\SSH2($_REQUEST['server']['host']);
-			if(!$ssh->login($_REQUEST['server']['user'], $pass)) 
-				oops("Could not login. Invalid host, user or password.");
-		}catch(Exception $e){ 
-			oops("Could not login. Invalid host, user or password", $e); 
-		}
+		
+		$ssh = getSSH($_REQUEST['server']['host'], $_REQUEST['server']['user'], $pass);
 		
 		if(!empty($_REQUEST['server']['logs'])){
 			foreach($_REQUEST['server']['logs'] as $logName=>$logPath){
@@ -607,4 +560,34 @@ function json($array){
         $result .= $char.$post;
     }
     return $result;
+}
+
+$_phpseclib_ = false;
+function getSSH($NameOrHost, $user=false, $pass=false){
+	if(!$GLOBALS['_phpseclib_']) 
+		require realpath(dirname(__FILE__))."/classes/vendor/autoload.php";
+	$GLOBALS['_phpseclib_'] = true;
+	if(empty($user)){
+		$config = getConfig();
+		$host = $config['servers'][$NameOrHost]['HOST'];
+		$user = $config['servers'][$NameOrHost]['USER'];
+		$pass = $config['servers'][$NameOrHost]['PASS'];		
+	}else $host = $NameOrHost;
+	try{ $ssh = new \phpseclib\Net\SSH2($host); }
+	catch(Exception $e){ oops("Could not connect to host $host"); }
+	$connected = false; $time = time();
+	while($time+20 > time() && !$connected){
+		try{ $connected = !!$ssh->login($user, $pass); }
+		catch(Exception $e){}
+		if($connected) break;
+		sleep(3);
+	}
+	if(!$connected) oops("Could not login to host $host using the $user account");
+	return $ssh;
+}
+
+function getConfig(){
+	$servers = file_get_contents("config.json");
+	$servers = json_decode($servers, true);
+	return $servers;
 }
