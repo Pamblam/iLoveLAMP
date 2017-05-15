@@ -9,9 +9,9 @@ iLL is a suite of LAMP tools with a dynamic, responsive interface; error logging
 
 #### Dashboard
 
-Dashboard is the default module. It is loaded when iLoveLAMP is opened. For now,  this page just contains links to the other modules.
+Dashboard is the default module. It is loaded when iLoveLAMP is opened. This page contains links to the other modules and an overview of the currently selected server.
 
-[![iLoveLAMP Dashboard Screenshot](http://i.imgur.com/kDHqzaa.png)](http://i.imgur.com/kDHqzaa.png)
+[![iLoveLAMP Dashboard Screenshot](http://i.imgur.com/oivhHgn.png)](http://i.imgur.com/oivhHgn.png)
 
 #### Quick IDE
 

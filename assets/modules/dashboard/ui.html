@@ -4,5 +4,73 @@
 	</div>
 </div>           
 <hr />
-<div id="chart_div" style="width: 400px; height: 120px;"></div>
-<div id="dashWrapper"></div>
+<div class="row guages-row">
+	<div class="col-md-3 col-sm-6 col-xs-12">
+		<div class="info-box">
+			<span class="info-box-icon bg-aqua"><i class="ion ion-ios-gear-outline"></i></span>
+
+			<div class="info-box-content">
+				<div id="memory-gauge" style="width: 75px; height: 75px; display: inline-block; float:right;"></div>
+				<span class="info-box-text">Memory</span>
+				<span class="info-box-number" id='memory-text'>?<small>%</small></span>
+				<small class="last-resource-update">As of ....</small> <a href='#' class="refresh-resources"><i class="fa fa-refresh"></i></a>
+			</div>
+		</div>
+	</div>
+	
+	<div class="col-md-3 col-sm-6 col-xs-12">
+		<div class="info-box">
+			<span class="info-box-icon bg-red"><i class="fa fa-balance-scale"></i></span>
+
+			<div class="info-box-content">
+				<div id="swap-gauge" style="width: 75px; height: 75px; display: inline-block; float:right;"></div>
+				<span class="info-box-text">SWAP</span>
+				<span class="info-box-number" id='swap-text'>?<small>%</small></span>
+				<small class="last-resource-update">As of ....</small> <a href='#' class="refresh-resources"><i class="fa fa-refresh"></i></a>
+			</div>
+		</div>
+	</div>
+
+	<div class="clearfix visible-sm-block"></div>
+
+	<div class="col-md-3 col-sm-6 col-xs-12">
+		<div class="info-box">
+			<span class="info-box-icon bg-green"><i class="fa fa-leaf"></i></span>
+			<div class="info-box-content">
+				<div id="sys-gauge" style="width: 75px; height: 75px; display: inline-block; float:right;"></div>
+				<span class="info-box-text">Sys CPU</span>
+				<span class="info-box-number" id='sys-text'>?<small>%</small></span>
+				<small class="last-resource-update">As of ....</small> <a href='#' class="refresh-resources"><i class="fa fa-refresh"></i></a>
+			</div>
+		</div>
+	</div>
+	
+	<div class="col-md-3 col-sm-6 col-xs-12">
+		<div class="info-box">
+			<span class="info-box-icon bg-yellow"><i class="ion ion-ios-people-outline"></i></span>
+			<div class="info-box-content">
+				<div id="user-gauge" style="width: 75px; height: 75px; display: inline-block; float:right;"></div>
+				<span class="info-box-text">User CPU</span>
+				<span class="info-box-number" id='user-text'>?<small>%</small></span>
+				<small class="last-resource-update">As of ....</small> <a href='#' class="refresh-resources"><i class="fa fa-refresh"></i></a>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-12">
+		<div class="box">
+            <div class="box-header with-border">
+				<h3 class="box-title">Shortcuts</h3>
+				<div class="box-tools pull-right">
+					<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+					<button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+				</div>
+            </div>
+            <div class="box-body">
+				<div id="dashWrapper"></div>
+            </div>
+		</div>
+	</div>
+</div>

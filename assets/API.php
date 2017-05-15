@@ -20,6 +20,15 @@ checkParams(array("action"));
 
 switch($_REQUEST['action']){
 	
+	case "svn_up":
+		checkParams(array("server", "path"));
+		$ssh = getSSH($_REQUEST['server']);
+		$raw = $ssh->exec("svn up {$_REQUEST['path']}");
+		$return['response'] = $raw;
+		$return['success'] = true;
+		output();
+		break;
+		
 	case "get_wc_status":
 		checkParams(array("server", "path"));
 		$ssh = getSSH($_REQUEST['server']);
