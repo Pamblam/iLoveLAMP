@@ -97,6 +97,7 @@ There are several 3rd party extensions being used, some written by myself, some 
  - Resources module
  - Write some documentation in the Wiki
  - Figure out what the licenses are for each of the 3rd party libraries and include them in the README
+ - Implement some kind of upload progress display when uploading large files
 
 <hr>
 

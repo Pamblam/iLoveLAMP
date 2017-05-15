@@ -40,7 +40,7 @@ iLoveLAMP.modules.files = (function(){
 			var glyph = data.type == "directory" ? 'glyphicon-folder-open' : 'glyphicon glyphicon-file';
 			var color = data.type == "directory" ? '#10a1c9' : '#14ccff';
 			$thumb = $("<div class='fsthumb' style='color: "+color+" !important; display:inline-block; margin:.5em; height: 6em; width: 6em; overflow: hidden; text-overflow: ellipsis;'>");
-			$thumb.html("<a href='#' style='text-decoration: none; color: "+color+" !important; text-align: center;'>"+
+			$thumb.html("<a href='#' title='"+data.name+"' name='"+data.name+"' style='text-decoration: none; color: "+color+" !important; text-align: center;'>"+
 				'<span class="fsicon"></span><br>'+
 				data.name+'</a>');
 			$thumb.data("file", data);
@@ -59,6 +59,11 @@ iLoveLAMP.modules.files = (function(){
 					icon = '<i class="fa fa-file"></i>';
 				}else{
 					switch(data.name.split(".").pop().toUpperCase()){
+						case "ZIP": 
+							filetype = "ft_zip_files"; 
+							action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "unzip";
+							icon = '<i class="fa fa-file-zip-o"></i>';
+							break;
 						case "JPG": case "GIF": case "JPEG": case "BMP": case "PNG": case "SVG":
 							filetype = "ft_image_files"; 
 							action = iLoveLAMP.illSettings[filetype] ? iLoveLAMP.illSettings[filetype] : "modal";
@@ -266,6 +271,12 @@ iLoveLAMP.modules.files = (function(){
 					file: data.name
 				};
 				iLoveLAMP.loadPage('ide');
+				break;
+			case "unzip":
+				terminal("cd \""+cwd+"\"; unzip \""+data.name+"\"", function(resp){
+					if(resp.toLowerCase().indexOf("command not found") > -1) alert("Install unzip command using:\nsudo apt-get install unzip");
+					else loadDirectory(cwd);
+				});
 				break;
 			case "new_tab":
 				$form = $("<form action=./assets/API.php method=POST target=_blank>");

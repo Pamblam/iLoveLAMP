@@ -1,7 +1,8 @@
 <?php
 session_start();
 
-//ini_set('display_errors', 0);
+error_reporting(0);
+ini_set('display_errors', 0);
 
 // Create the return array
 $return = array(
@@ -18,6 +19,23 @@ if(auth_user() === false) oops("Access denied.");
 checkParams(array("action"));
 
 switch($_REQUEST['action']){
+	
+	case "get_wc_status":
+		checkParams(array("server", "path"));
+		$ssh = getSSH($_REQUEST['server']);
+		$raw = $ssh->exec("svn st -u {$_REQUEST['path']}");
+		$lines = explode("\n", $raw);
+		$parsed = array();
+		foreach($lines as $line){
+			if(strpos($line, "/")===false) continue;
+			$line = explode(" ", $line);
+			if($line[0] === "?") continue;
+			$parsed[] = array_pop($line);
+		}
+		$return['response'] = "Gathered status info for Working Copy";
+		$return['data'] = $parsed;
+		output();
+		break;
 	
 	case "sql_query":
 		checkParams(array("server", "db", "query"));
@@ -91,6 +109,10 @@ switch($_REQUEST['action']){
         }
 		if($message) oops($message);
 		
+		// Acquire checksum...
+		$cksum = explode(" ", exec("cksum \"".$_FILES['uploadFile']['tmp_name']."\""));
+		array_pop($cksum); $cksum = implode(" ", $cksum); // pop off the filename since it's a temp name and won't match
+		
 		// Base 64 encode file contents
 		$contents = file_get_contents($_FILES['uploadFile']['tmp_name']);
 		$base64 = base64_encode($contents);
@@ -119,6 +141,14 @@ switch($_REQUEST['action']){
 		$cmd3 = 'mv "'.$_REQUEST['path']."/".$tempname."\" \"".$_REQUEST['path']."/".$_FILES['uploadFile']['name'].'"';
 		$c = $ssh->exec($cmd3);
 		if(!empty($c)) oops("Error renaming temp file after upload.");
+		
+		// make sure checksum matches
+		$cksum2 = explode(" ", $ssh->exec("cksum \"".$_REQUEST['path']."/".$_FILES['uploadFile']['name']."\""));
+		array_pop($cksum2); $cksum2 = implode(" ", $cksum2); // pop off the filename 
+		if($cksum !== $cksum2){
+			$ssh->exec("rm \"".$_REQUEST['path']."/".$_FILES['uploadFile']['name']."\"");
+			oops("Chksum mismatch - File removed.");
+		}
 		
 		$return['data'] = $_REQUEST['path']."/".$_FILES['uploadFile']['name'];
 		output();
@@ -372,7 +402,8 @@ switch($_REQUEST['action']){
 				"LOGS" => $config['LOGS'],
 				"THEME" => $config['THEME'],
 				"DEFAULT" => $config['DEFAULT'],
-				"DATABASES" => !empty($config['DATABASES']) ? $config['DATABASES'] : array()
+				"DATABASES" => !empty($config['DATABASES']) ? $config['DATABASES'] : array(),
+				"SVNWCS" => !empty($config['SVNWCS']) ? $config['SVNWCS'] : array(),
 			);
 		}
 		$return['response'] = "Gathered ".count($data)." servers.";
@@ -432,6 +463,14 @@ switch($_REQUEST['action']){
 			}
 		}
 		
+		if(!empty($_REQUEST['server']['svn_wcs'])){
+			foreach($_REQUEST['server']['svn_wcs'] as $wcName=>$wcPath){
+				$raw = $ssh->exec('cd "'.$wcPath.'"; svn info');
+				$raw = strpos($raw, "Repository Root") !== false;
+				if(!$raw) oops("$wcPath is not a subversion working copy");
+			}
+		}
+		
 		// Validate and add each database
 		if(!empty($_REQUEST['server']['databases'])){
 			foreach($_REQUEST['server']['databases'] as $database){
@@ -465,7 +504,8 @@ switch($_REQUEST['action']){
 				"LOGS"=> isset($_REQUEST['server']['logs']) ? $_REQUEST['server']['logs'] : array(),
 				"THEME"=> $_REQUEST['server']['theme'],
 				"DEFAULT"=> !empty($_REQUEST['server']['default']),
-				"DATABASES"=>empty($_REQUEST['server']['databases']) ? array() : $_REQUEST['server']['databases']
+				"DATABASES"=>empty($_REQUEST['server']['databases']) ? array() : $_REQUEST['server']['databases'],
+				"SVNWCS"=>empty($_REQUEST['server']['svn_wcs']) ? array() : $_REQUEST['server']['svn_wcs'],
 			);
 		}else{
 			$servers['servers'][$_REQUEST['server']['new_name']] = array(
@@ -475,7 +515,8 @@ switch($_REQUEST['action']){
 				"LOGS"=> isset($_REQUEST['server']['logs']) ? $_REQUEST['server']['logs'] : array(),
 				"THEME"=> $_REQUEST['server']['theme'],
 				"DEFAULT"=> !empty($_REQUEST['server']['default']),
-				"DATABASES"=>empty($_REQUEST['server']['databases']) ? array() : $_REQUEST['server']['databases']
+				"DATABASES"=>empty($_REQUEST['server']['databases']) ? array() : $_REQUEST['server']['databases'],
+				"SVNWCS"=>empty($_REQUEST['server']['svn_wcs']) ? array() : $_REQUEST['server']['svn_wcs']
 			);
 			unset($servers['servers'][$_REQUEST['server']['orig_name']]);
 		}
@@ -579,6 +620,11 @@ function getSSH($NameOrHost, $user=false, $pass=false){
 	while($time+20 > time() && !$connected){
 		try{ $connected = !!$ssh->login($user, $pass); }
 		catch(Exception $e){}
+		$errors = $ssh->getErrors();
+		if(!empty($errors)){
+			if(!isset($GLOBALS['return']['errors'])) $GLOBALS['return']['errors'] = array();
+			$GLOBALS['return']['errors'][] = $errors;
+		}
 		if($connected) break;
 		sleep(3);
 	}

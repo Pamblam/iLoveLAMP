@@ -57,6 +57,12 @@ iLoveLAMP.modules.servers = (function(){
 						$(".error_log_row").last().find("input").first().val(logName);
 						$(".error_log_row").last().find("input").last().val(resp.data[$(this).val()].LOGS[logName]);
 					}
+					for(var wcName in resp.data[$(this).val()].SVNWCS){
+						if(!resp.data[$(this).val()].LOGS.hasOwnProperty(wcName)) continue;
+						addSVNRow();
+						$(".svn_row").last().find("input").first().val(wcName);
+						$(".svn_row").last().find("input").last().val(resp.data[$(this).val()].LOGS[wcName]);
+					}
 					for(var i=0; i<resp.data[$(this).val()].DATABASES.length; i++){
 						addDBRow();
 						$(".db_row").last().find(".dbtype").val(resp.data[$(this).val()].DATABASES[i].type);
@@ -88,6 +94,12 @@ iLoveLAMP.modules.servers = (function(){
 				$(".error_log_row").each(function(){
 					server.logs[$(this).find("input").first().val()] = $(this).find("input").last().val();
 				});
+				
+				server.svn_wcs = {};
+				$(".svn_row").each(function(){
+					server.svn_wcs[$(this).find("input").first().val()] = $(this).find("input").last().val();
+				});
+				
 				server.pass = $("#srever_pw").val();
 				server.default = $("#is_default_server").is(":checked") ? 1 : 0;
 				if([server.new_name, server.host, server.user].indexOf("") > -1)  return showError("Title, host, user and password are required.");
@@ -107,11 +119,13 @@ iLoveLAMP.modules.servers = (function(){
 			
 			$("#add_log_file").click(addErrorLogRow);
 			$("#add_db").click(addDBRow);
+			$("#addsvnbtn").click(addSVNRow);
 			
 		});
 		
 		$(document).on('click', '.removeLog', removeRow);
 		$(document).on('click', '.removeDB', removeRow);
+		$(document).on('click', '.removeSVN', removeRow);
 	}
 	
 	function addDBRow(){
@@ -146,6 +160,16 @@ iLoveLAMP.modules.servers = (function(){
 			'</div></div>').insertBefore("#add_db");
 	}
 	
+	function addSVNRow(){
+		$('<div class="row svn_row" style="margin-bottom: 1em"><div class="col-md-4">'+
+			'<input type="text" class="form-control" placeholder="WC Name">'+
+			'</div><div class="col-md-8"><div class="input-group">'+
+			'<input type="text" class="form-control" placeholder="WC Path">'+
+			'<span class="input-group-btn">'+
+			'<button class="btn btn-danger removeSVN" type="button"> <i class="fa fa-minus-square"></i> </button></span>'+
+			'</div></div></div>').insertBefore("#addsvnbtn");
+	}
+	
 	function addErrorLogRow(){
 		$('<div class="row error_log_row" style="margin-bottom: 1em"><div class="col-md-4">'+
 			'<input type="text" class="form-control" placeholder="Log Name">'+
@@ -165,6 +189,7 @@ iLoveLAMP.modules.servers = (function(){
 	function exit(){
 		$(document).off('click', '.removeLog', removeRow);
 		$(document).off('click', '.removeDB', removeRow);
+		$(document).off('click', '.removeSVN', removeRow);
 	}
 		
 	return {
