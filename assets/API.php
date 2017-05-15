@@ -367,6 +367,16 @@ switch($_REQUEST['action']){
 		$return['response'] = "Gathered processes.";
 		output();
 		break;
+	
+	case "get_resources":
+		require realpath(dirname(__FILE__))."/classes/pman.php";
+		checkParams(array("server"));
+		$ssh = getSSH($_POST['server']);
+		$pman = new pMan($ssh);
+		$return['data'] = $pman->details();
+		$return['response'] = "Gathered processes.";
+		output();
+		break;
 		
 	case "kill_process":
 		require realpath(dirname(__FILE__))."/classes/pman.php";

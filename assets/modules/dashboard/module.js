@@ -1,6 +1,19 @@
 iLoveLAMP.modules.dashboard = (function(){
 	
+	var isOpen = false;
+	
+	function exit(){
+		isOpen = false;
+	}
+	
+	function getResources(cb){
+		if(typeof cb !== "function") return;
+		iLoveLAMP.api("get_resources", {server: iLoveLAMP.currentServer}).then(cb);
+	}
+	
 	function init(){
+		isOpen = true;
+		$('#chart_div').hide();
 		iLoveLAMP.api("get_modules", {}).then(function(resp){
 			// wait for all modules to load
 			(function wait(done){
@@ -28,6 +41,46 @@ iLoveLAMP.modules.dashboard = (function(){
 				}
 				if(row) $("#dashWrapper").append(row);
 			});
+			
+			if(iLoveLAMP.currentServer){
+				getResources(function(resp){
+					$('#chart_div').show();
+					var availablePhysical = parseFloat(resp.data.MEMORY.PHYSICAL.AVAILABLE.substr(0, resp.data.MEMORY.PHYSICAL.AVAILABLE.indexOf("mb")));
+					var inUsePhysical = parseFloat(resp.data.MEMORY.PHYSICAL.IN_USE.substr(0, resp.data.MEMORY.PHYSICAL.IN_USE.indexOf("mb")));
+					var val = inUsePhysical / availablePhysical * 100;
+					google.charts.load('current', {'packages':['gauge']});
+					google.charts.setOnLoadCallback(function(){
+						var data = google.visualization.arrayToDataTable([
+							['Label', 'Value'],
+							['Memory', val]
+						]);
+
+						var options = {
+							width: 400, height: 120,
+							redFrom: 90, redTo: 100,
+							yellowFrom: 75, yellowTo: 90,
+							minorTicks: 5
+						};
+
+						console.log(resp, options); 
+
+						var chart = new google.visualization.Gauge($('#chart_div')[0]);
+
+						chart.draw(data, options);
+
+						(function refreshProcesses(){
+							if(isOpen) getResources(function(resp){ 
+								var availablePhysical = parseInt(resp.data.MEMORY.PHYSICAL.AVAILABLE.substr(0, resp.data.MEMORY.PHYSICAL.AVAILABLE.indexOf("mb")));
+								var inUsePhysical = parseInt(resp.data.MEMORY.PHYSICAL.IN_USE.substr(0, resp.data.MEMORY.PHYSICAL.IN_USE.indexOf("mb")));
+								var val = inUsePhysical / availablePhysical * 100;
+								data.setValue(0, 1, val);
+								chart.draw(data, options);
+								if(isOpen) setTimeout(refreshProcesses, 3000);
+							});
+						})();
+					});
+				});
+			}
 		});
 	}
 	
@@ -35,6 +88,7 @@ iLoveLAMP.modules.dashboard = (function(){
 		requiresServer: false,
 		title: "Dashboard",
 		icon: "desktop",
-		init: init
+		init: init,
+		exit: exit
 	};
 })();

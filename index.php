@@ -100,6 +100,7 @@ if(auth_user() === false) die("Access denied.");
 		<script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
 		<script src="https://cdn.datatables.net/1.10.13/js/dataTables.bootstrap.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js"></script>
+		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 		<script src='assets/js/sql-formatter.min.js'></script>
 		<script src='assets/codemirror/lib/codemirror.js'></script>
 		<script src='assets/codemirror/addon/selection/selection-pointer.js'></script>
