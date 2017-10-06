@@ -208,18 +208,30 @@ var iLoveLAMP = (function ($) {
 		loadModules: function(done){
 			iLoveLAMP.api("get_modules", {}).then(function(resp){
 				var counter = 0;
+				var moduleElements = [];
+				var promiseList = [];
 				for(var n=resp.data.length; n--;)(function(i){
 					counter++;
-					$.getScript("./assets/modules/"+i+"/module.js", function(){
+					var modulePromise = $.getScript("./assets/modules/"+i+"/module.js", function(){
 						(function waitForModule(){
 							if(iLoveLAMP.modules[i]){
-								$("#main-menu").append('<li class="'+(i==='dashboard'?'active':'')+'"><a href="#" data-mod='+i+' class=change_mod><i class="fa fa-'+iLoveLAMP.modules[i].icon+' "></i> <span>'+iLoveLAMP.modules[i].title+'</span></a></li>');
+                                moduleElements[i] = '<li class="'+(i==='dashboard'?'active':'')+'"><a href="#" data-mod='+i+' class=change_mod><i class="fa fa-'+iLoveLAMP.modules[i].icon+' "></i> <span>'+iLoveLAMP.modules[i].title+'</span></a></li>';
 								counter--;
 								if(counter === 0) done();
 							}else setTimeout(waitForModule, 50);
 						})();
 					});
-				})(resp.data[n]);
+                    promiseList.push(modulePromise)
+				})(resp.data[n])
+
+				Promise.all(promiseList).then(function(fulfilledPromises) {
+						resp.data.map(function (key) {
+                            $("#main-menu").append(moduleElements[key]);
+						})
+                    }
+				);
+
+                return moduleElements;
 			});
 		},
 		
