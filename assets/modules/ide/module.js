@@ -47,6 +47,8 @@ iLoveLAMP.modules.ide = (function(){
 			}).then(function(data){
 				iLoveLAMP.modules.ide.preload.code = data;
 				editor.getDoc().setValue(data);
+				$("#idescriptpath").text(iLoveLAMP.modules.ide.preload.filpath + '/');
+				$("#idescriptpath").removeClass('hidden');
 				$("#idescriptname").val(iLoveLAMP.modules.ide.preload.file);
 				$("#iderunbtn").hide();
 				$("input[name='idetarget']").parent().hide();
