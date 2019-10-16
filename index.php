@@ -39,30 +39,7 @@ if(auth_user() === false) die("Access denied.");
 	<body class="hold-transition sidebar-mini">
 		<div class="wrapper">
 
-			<header class="main-header">
-				<a href="index.html" class="logo">
-					<span class="logo-mini"><b>iL</b>L</span>
-					<span class="logo-lg"><i class="fa fa-lightbulb-o"></i> <b>iLove</b>LAMP</span>
-				</a>
-				<nav class="navbar navbar-static-top">
-					<a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
-						<span class="sr-only">Toggle navigation</span>
-					</a>
-					
-					<div class="navbar-custom-menu">
-						<ul class="nav navbar-nav">
-							<li class="dropdown messages-menu">
-								<a href="#" id="server-ind">
-									<i class="fa fa-server"></i> 
-									<span id="current_server_display_name">Servers</span>
-									<span class="label label-success servercount">4</span>
-								</a>
-							</li>
-						</ul>
-					</div>
-					
-				</nav>
-			</header>
+			<?php realpath(dirname(__FILE__))."/assets/templates/header.html"; ?>
 
 			<aside class="main-sidebar">
 				<section class="sidebar">
