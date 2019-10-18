@@ -39,7 +39,7 @@ if(auth_user() === false) die("Access denied.");
 	<body class="hold-transition sidebar-mini">
 		<div class="wrapper">
 
-			<?php realpath(dirname(__FILE__))."/assets/templates/header.html"; ?>
+			<?php require realpath(dirname(__FILE__))."/assets/templates/header.html"; ?>
 
 			<aside class="main-sidebar">
 				<section class="sidebar">
